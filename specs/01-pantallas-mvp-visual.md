@@ -88,18 +88,18 @@ Claves de `localStorage` (se mantienen igual que en la referencia):
 
 ## Acceptance criteria
 
-- [ ] `npm run build` termina sin errores de TypeScript ni de ESLint.
-- [ ] `npm run lint` pasa sin errores.
-- [ ] `/` muestra la Biblioteca con los 8 juegos de `lib/data.ts`; escribir en el buscador filtra por título; pulsar un chip de categoría filtra por categoría.
-- [ ] Pulsar una tarjeta de juego navega a `/juego/[id]` y muestra título, descripción, estadísticas y un leaderboard seed de 10 filas de ese juego.
-- [ ] "JUGAR AHORA" en Detalle navega a `/juego/[id]/jugar`; la puntuación ahí sube sola cada ~220ms mientras no está en pausa.
-- [ ] Pulsar "PAUSA" detiene la subida de puntuación y muestra el overlay "EN PAUSA"; pulsar de nuevo ("REANUDAR") la reanuda.
-- [ ] Pulsar "FIN" abre el modal de fin de partida con la puntuación final; introducir iniciales y pulsar "GUARDAR PUNTUACIÓN" escribe una entrada en `localStorage["av_scores"]` y muestra la confirmación de guardado.
-- [ ] `/iniciar-sesion` permite enviar cualquier usuario/contraseña y vuelve a `/` con el nav mostrando ese nombre de usuario en vez de "Iniciar Sesión".
-- [ ] "JUGAR COMO INVITADO" en `/iniciar-sesion` vuelve a `/` sin crear sesión de usuario.
-- [ ] Cerrar sesión (pulsando la píldora de usuario en el nav) borra `localStorage["av_user"]` y el nav vuelve a mostrar "Iniciar Sesión".
-- [ ] `/salon-de-la-fama` muestra podio y tabla completa según el juego seleccionado en las pestañas, más una fila "tu mejor marca" solo cuando hay sesión de usuario.
-- [ ] En un viewport menor a 840px, los enlaces de escritorio del nav se ocultan y la hamburguesa abre el panel móvil deslizante.
+- [X] `npm run build` termina sin errores de TypeScript ni de ESLint.
+- [X] `npm run lint` pasa sin errores.
+- [X] `/` muestra la Biblioteca con los 8 juegos de `lib/data.ts`; escribir en el buscador filtra por título; pulsar un chip de categoría filtra por categoría.
+- [X] Pulsar una tarjeta de juego navega a `/juego/[id]` y muestra título, descripción, estadísticas y un leaderboard seed de 10 filas de ese juego.
+- [X] "JUGAR AHORA" en Detalle navega a `/juego/[id]/jugar`; la puntuación ahí sube sola cada ~220ms mientras no está en pausa.
+- [X] Pulsar "PAUSA" detiene la subida de puntuación y muestra el overlay "EN PAUSA"; pulsar de nuevo ("REANUDAR") la reanuda.
+- [X] Pulsar "FIN" abre el modal de fin de partida con la puntuación final; introducir iniciales y pulsar "GUARDAR PUNTUACIÓN" escribe una entrada en `localStorage["av_scores"]` y muestra la confirmación de guardado.
+- [X] `/iniciar-sesion` permite enviar cualquier usuario/contraseña y vuelve a `/` con el nav mostrando ese nombre de usuario en vez de "Iniciar Sesión".
+- [X] "JUGAR COMO INVITADO" en `/iniciar-sesion` vuelve a `/` sin crear sesión de usuario.
+- [X] Cerrar sesión (pulsando la píldora de usuario en el nav) borra `localStorage["av_user"]` y el nav vuelve a mostrar "Iniciar Sesión".
+- [X] `/salon-de-la-fama` muestra podio y tabla completa según el juego seleccionado en las pestañas, más una fila "tu mejor marca" solo cuando hay sesión de usuario.
+- [X] En un viewport menor a 840px, los enlaces de escritorio del nav se ocultan y la hamburguesa abre el panel móvil deslizante.
 
 ## Decisions
 
