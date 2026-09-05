@@ -85,15 +85,33 @@ export default function AcercaDe() {
   const [form, setForm] = useState({ name: "", email: "", msg: "" });
   const [sent, setSent] = useState<string | null>(null);
   const [shake, setShake] = useState(false);
+  const [sending, setSending] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const onSubmit = (e: FormEvent) => {
+  const onSubmit = async (e: FormEvent) => {
     e.preventDefault();
+    if (sending) return;
     if (!form.name.trim() || !form.email.trim() || !form.msg.trim()) {
       setShake(true);
       setTimeout(() => setShake(false), 400);
       return;
     }
-    setSent(form.name.trim());
+    setSending(true);
+    setError(null);
+    try {
+      const res = await fetch("/api/contact", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(form),
+      });
+      const data = await res.json();
+      if (data.ok) setSent(form.name.trim());
+      else setError(data.error || "NO SE PUDO ENVIAR. INTENTA DE NUEVO.");
+    } catch {
+      setError("NO SE PUDO ENVIAR. INTENTA DE NUEVO.");
+    } finally {
+      setSending(false);
+    }
   };
 
   return (
@@ -152,9 +170,14 @@ export default function AcercaDe() {
             </div>
           </div>
 
-          <form className={`contact-form${shake ? " shake" : ""}`} onSubmit={onSubmit}>
+          <form className={`contact-form${shake ? " shake" : ""}`} onSubmit={onSubmit} noValidate>
             {!sent ? (
               <>
+                {error && (
+                  <div className="field" role="alert" style={{ color: "var(--magenta, #ff3ea5)" }}>
+                    &gt; {error}
+                  </div>
+                )}
                 <div className="field">
                   <label>NOMBRE</label>
                   <input
@@ -181,8 +204,8 @@ export default function AcercaDe() {
                     placeholder="Cuéntanos qué tienes en mente…"
                   ></textarea>
                 </div>
-                <button className="btn xl press" type="submit" style={{ width: "100%" }}>
-                  ▶ ENVIAR MENSAJE
+                <button className="btn xl press" type="submit" disabled={sending} style={{ width: "100%" }}>
+                  {sending ? "ENVIANDO…" : "▶ ENVIAR MENSAJE"}
                 </button>
               </>
             ) : (
@@ -210,6 +233,7 @@ export default function AcercaDe() {
                       type="button"
                       onClick={() => {
                         setSent(null);
+                        setError(null);
                         setForm({ name: "", email: "", msg: "" });
                       }}
                     >

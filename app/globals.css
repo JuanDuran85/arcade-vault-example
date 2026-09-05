@@ -103,7 +103,8 @@ a { color: inherit; text-decoration: none; }
 }
 
 /* ===== app frame ===== */
-.av-main { flex: 1; }
+/* position+z-index: sin esto el contenido no posicionado queda debajo de .av-noise (fixed, z:1) */
+.av-main { flex: 1; position: relative; z-index: 2; }
 
 /* ===== pixel + neon text ===== */
 .pixel { font-family: var(--pixel); letter-spacing: 0.04em; line-height: 1.25; text-transform: uppercase; }
