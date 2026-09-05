@@ -12,7 +12,10 @@ export default function Nav() {
 
   const isActive = (path: string) => {
     if (path === "/") {
-      return pathname === "/" || pathname.startsWith("/juego");
+      return pathname === "/";
+    }
+    if (path === "/biblioteca") {
+      return pathname === "/biblioteca" || pathname.startsWith("/juego");
     }
     return pathname === path;
   };
@@ -33,6 +36,13 @@ export default function Nav() {
             className={isActive("/") ? "active" : ""}
             onClick={() => setOpen(false)}
           >
+            Inicio
+          </Link>
+          <Link
+            href="/biblioteca"
+            className={isActive("/biblioteca") ? "active" : ""}
+            onClick={() => setOpen(false)}
+          >
             Biblioteca
           </Link>
           <Link
@@ -41,6 +51,13 @@ export default function Nav() {
             onClick={() => setOpen(false)}
           >
             Salón de la Fama
+          </Link>
+          <Link
+            href="/acerca-de"
+            className={isActive("/acerca-de") ? "active" : ""}
+            onClick={() => setOpen(false)}
+          >
+            Acerca de
           </Link>
         </div>
 
@@ -84,6 +101,13 @@ export default function Nav() {
           className={isActive("/") ? "active" : ""}
           onClick={() => setOpen(false)}
         >
+          Inicio
+        </Link>
+        <Link
+          href="/biblioteca"
+          className={isActive("/biblioteca") ? "active" : ""}
+          onClick={() => setOpen(false)}
+        >
           Biblioteca
         </Link>
         <Link
@@ -92,6 +116,13 @@ export default function Nav() {
           onClick={() => setOpen(false)}
         >
           Salón de la Fama
+        </Link>
+        <Link
+          href="/acerca-de"
+          className={isActive("/acerca-de") ? "active" : ""}
+          onClick={() => setOpen(false)}
+        >
+          Acerca de
         </Link>
         <Link
           href="/iniciar-sesion"
