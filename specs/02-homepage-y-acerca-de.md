@@ -1,6 +1,6 @@
 # SPEC 02 — Homepage y Acerca de
 
-> **Status:** Aprobado
+> **Status:** Implementado
 > **Depends on:** SPEC 01
 > **Date:** 2026-09-04
 > **Objective:** Portar como rutas reales de Next.js las pantallas de Inicio (Home) y Acerca de del prototipo de referencia (`references/home-about/`), moviendo la Biblioteca de `/` a `/biblioteca` y actualizando el nav compartido con las 4 secciones del sitio.
@@ -46,15 +46,15 @@ Ninguno nuevo. Se reutiliza `GAMES` de `lib/data.ts` (spec 01) para el preview d
 
 ## Acceptance criteria
 
-- [ ] `npm run build` termina sin errores de TypeScript ni de ESLint.
-- [ ] `npm run lint` pasa sin errores.
-- [ ] `/` muestra la Home con hero, features, preview de 6 juegos, stats, actividad en vivo, precios y CTA final.
-- [ ] `/biblioteca` muestra la Biblioteca (buscador + filtro de categoría) igual que antes en `/`.
-- [ ] `/acerca-de` muestra la misión, highlights y el formulario de contacto; enviar el formulario con campos vacíos hace "shake" sin enviar; con campos completos muestra la animación de terminal de éxito.
-- [ ] El nav (desktop y panel móvil) muestra Inicio, Biblioteca, Salón de la Fama y Acerca de, cada uno navegando a su ruta y marcándose activo correctamente.
-- [ ] "EXPLORAR JUEGOS", "VER TODOS LOS JUEGOS →" y "EMPEZAR GRATIS →" navegan a `/biblioteca` o `/iniciar-sesion` según corresponda; una tarjeta de juego del preview navega a `/juego/[id]`.
-- [ ] "VER SALÓN →" en la card de top jugadores navega a `/salon-de-la-fama`.
-- [ ] Las animaciones `reveal` (fade/slide al hacer scroll) funcionan en Home y About.
+- [X] `npm run build` termina sin errores de TypeScript ni de ESLint.
+- [X] `npm run lint` pasa sin errores.
+- [X] `/` muestra la Home con hero, features, preview de 6 juegos, stats, actividad en vivo, precios y CTA final.
+- [X] `/biblioteca` muestra la Biblioteca (buscador + filtro de categoría) igual que antes en `/`.
+- [X] `/acerca-de` muestra la misión, highlights y el formulario de contacto; enviar el formulario con campos vacíos hace "shake" sin enviar; con campos completos muestra la animación de terminal de éxito.
+- [X] El nav (desktop y panel móvil) muestra Inicio, Biblioteca, Salón de la Fama y Acerca de, cada uno navegando a su ruta y marcándose activo correctamente.
+- [X] "EXPLORAR JUEGOS", "VER TODOS LOS JUEGOS →" y "EMPEZAR GRATIS →" navegan a `/biblioteca` o `/iniciar-sesion` según corresponda; una tarjeta de juego del preview navega a `/juego/[id]`.
+- [X] "VER SALÓN →" en la card de top jugadores navega a `/salon-de-la-fama`.
+- [X] Las animaciones `reveal` (fade/slide al hacer scroll) funcionan en Home y About.
 
 ## Decisions taken and discarded
 
