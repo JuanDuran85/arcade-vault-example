@@ -1,0 +1,1 @@
+- [Playwright Screenshots Directory](playwright-screenshots-dir.md) — screenshots location

@@ -17,7 +17,13 @@ npm run start    # run production build
 npm run lint     # eslint via eslint-config-next
 ```
 
+## Testing
+
 No test runner is configured yet.
+
+## Skills
+
+- Always use your frontend design skills to design user interfaces.
 
 ## Architecture
 
