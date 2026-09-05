@@ -1,4 +1,4 @@
-import { Game, ScoreRow } from "./types";
+import { Category, Game, ScoreRow } from "./types";
 
 export const GAMES: Game[] = [
   {
@@ -105,7 +105,7 @@ export function seededScores(seed: number, count = 12): ScoreRow[] {
   const used = new Set<string>();
   const rows: ScoreRow[] = [];
   for (let i = 0; i < count; i++) {
-    let name: string;
+    let name;
     do {
       name = PLAYERS[Math.floor(rand() * PLAYERS.length)];
     } while (used.has(name) && used.size < PLAYERS.length);

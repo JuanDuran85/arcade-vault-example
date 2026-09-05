@@ -4,7 +4,11 @@ import React, { useRef } from "react";
 import Link from "next/link";
 import { Game } from "@/lib/types";
 
-export default function GameCard({ game }: { game: Game }) {
+interface GameCardProps {
+  game: Game;
+}
+
+export default function GameCard({ game }: GameCardProps) {
   const tiltRef = useRef<HTMLDivElement>(null);
 
   const onMove = (e: React.MouseEvent<HTMLDivElement>) => {
@@ -22,20 +26,19 @@ export default function GameCard({ game }: { game: Game }) {
     el.style.transform = "";
   };
 
-  const colorClass = game.color === "magenta" ? "magenta" : game.color === "yellow" ? "yellow" : "";
-
   return (
-    <Link
-      href={`/juego/${game.id}`}
+    <div
       ref={tiltRef}
       className="card"
       onMouseMove={onMove}
       onMouseLeave={onLeave}
     >
-      <div className="cover">
-        <div className={`cover-bg ${game.cover}`}></div>
-        <div className="label">{game.cat}</div>
-      </div>
+      <Link href={`/juego/${game.id}`} className="cover-link">
+        <div className="cover">
+          <div className={`cover-bg ${game.cover}`}></div>
+          <div className="label">{game.cat}</div>
+        </div>
+      </Link>
       <div className="meta">
         <div className="title">{game.title}</div>
         <div className="desc">{game.short}</div>
@@ -44,9 +47,14 @@ export default function GameCard({ game }: { game: Game }) {
             <span>MEJOR PUNTUACIÓN</span>
             <b>{game.best.toLocaleString("es-ES")}</b>
           </div>
-          <div className={`btn ${colorClass}`}>JUGAR</div>
+          <Link
+            href={`/juego/${game.id}`}
+            className={`btn ${game.color === "magenta" ? "magenta" : game.color === "yellow" ? "yellow" : ""}`}
+          >
+            JUGAR
+          </Link>
         </div>
       </div>
-    </Link>
+    </div>
   );
 }

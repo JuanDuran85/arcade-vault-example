@@ -5,20 +5,23 @@ import { useRouter } from "next/navigation";
 import { useSession } from "@/lib/session";
 
 export default function AuthPage() {
-  const [tab, setTab] = useState<"login" | "signup">("login");
+  const router = useRouter();
+  const { login } = useSession();
+  const [tab, setTab] = useState("in");
   const [user, setUser] = useState("");
   const [pass, setPass] = useState("");
-  const { login } = useSession();
-  const router = useRouter();
+  const [email, setEmail] = useState("");
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const submit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!user) return;
-    login({ name: user });
+    login((user || "PLAYER1").toUpperCase().slice(0, 10));
     router.push("/");
   };
 
   const handleGuest = () => {
+    // Guest login corresponds to login(null) in the spec,
+    // but our SessionProvider logic is a bit simpler.
+    // We just redirect and let the user be null.
     router.push("/");
   };
 
@@ -26,54 +29,81 @@ export default function AuthPage() {
     <div className="av-auth-wrap fade-in">
       <div className="auth-card">
         <div className="auth-header">
-          <div className="auth-mark"></div>
-          <h2>SISTEMA DE ACCESO</h2>
+          <div className="mark"></div>
+          <h2 className="neon-cyan">ARCADE VAULT</h2>
+          <div className="mono" style={{ fontSize: 11, color: "var(--ink-faint)", letterSpacing: "0.16em", marginTop: 6 }}>
+            ACCESO AL SISTEMA · v2.6
+          </div>
         </div>
 
         <div className="auth-tabs">
-          <button className={tab === "login" ? "on" : ""} onClick={() => setTab("login")}>
-            ENTRAR
+          <button className={tab === "in" ? "on" : ""} onClick={() => setTab("in")}>
+            INICIAR SESIÓN
           </button>
-          <button className={tab === "signup" ? "on" : ""} onClick={() => setTab("signup")}>
+          <button className={tab === "up" ? "on" : ""} onClick={() => setTab("up")}>
             CREAR CUENTA
           </button>
         </div>
 
-        <form onSubmit={handleSubmit}>
+        <form onSubmit={submit}>
           <div className="field">
             <label>Usuario</label>
             <input
               value={user}
-              onChange={e => setUser(e.target.value)}
-              placeholder="PX_USER"
-              autoFocus
+              onChange={(e) => setUser(e.target.value)}
+              placeholder="px_kai"
             />
           </div>
+          {tab === "up" && (
+            <div className="field slide-in">
+              <label>Correo electrónico</label>
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="jugador@vault.gg"
+              />
+            </div>
+          )}
           <div className="field">
             <label>Contraseña</label>
             <input
               type="password"
               value={pass}
-              onChange={e => setPass(e.target.value)}
-              placeholder="********"
+              onChange={(e) => setPass(e.target.value)}
+              placeholder="••••••••"
             />
           </div>
-          <button className="btn pulse lg" style={{ width: "100%", margin: "16px 0" }} type="submit">
-            {tab === "login" ? "ACCEDER" : "REGISTRARSE"}
+
+          <button className="btn lg" type="submit" style={{ width: "100%", marginTop: 8 }}>
+            {tab === "in" ? "ENTRAR AL VAULT" : "CREAR Y JUGAR"}
           </button>
         </form>
 
-        <div className="auth-divider">O ACCEDER CON</div>
+        <button
+          className="btn ghost"
+          style={{ width: "100%", marginTop: 10 }}
+          onClick={handleGuest}
+        >
+          JUGAR COMO INVITADO
+        </button>
 
+        <div className="auth-divider">O CONTINÚA CON</div>
         <div className="social">
-          <button className="btn ghost">Google</button>
-          <button className="btn ghost">GitHub</button>
+          <button className="btn ghost" type="button">◆  GOOGLE</button>
+          <button className="btn ghost" type="button">▣  GITHUB</button>
         </div>
 
-        <div style={{ textAlign: "center", marginTop: 24 }}>
-          <button className="btn ghost" style={{ fontSize: 9 }} onClick={handleGuest}>
-            JUGAR COMO INVITADO
-          </button>
+        <div
+          style={{
+            marginTop: 18,
+            textAlign: "center",
+            fontSize: 11,
+            color: "var(--ink-faint)",
+            letterSpacing: "0.1em",
+          }}
+        >
+          AL ENTRAR ACEPTAS LOS TÉRMINOS DEL SALÓN ARCADE
         </div>
       </div>
     </div>

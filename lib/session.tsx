@@ -1,11 +1,11 @@
 "use client";
 
-import React, { createContext, useContext, useState } from "react";
+import React, { createContext, useContext, useState, useEffect } from "react";
 import { SessionUser } from "./types";
 
 interface SessionContextType {
   user: SessionUser | null;
-  login: (user: SessionUser) => void;
+  login: (name: string) => void;
   logout: () => void;
   saveScore: (entry: { game: string; score: number; name: string; at: number }) => void;
 }
@@ -13,31 +13,33 @@ interface SessionContextType {
 const SessionContext = createContext<SessionContextType | undefined>(undefined);
 
 export function SessionProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<SessionUser | null>(() => {
+  const [user, setUser] = useState<SessionUser | null>(null);
+
+  useEffect(() => {
     try {
       const saved = localStorage.getItem("av_user");
-      return saved ? JSON.parse(saved) : null;
+      if (saved) setUser(JSON.parse(saved));
     } catch (e) {
       console.error("Failed to load session", e);
-      return null;
     }
-  });
+  }, []);
 
-  const login = (userData: SessionUser) => {
+  const login = (name: string) => {
+    const newUser = { name };
+    setUser(newUser);
     try {
-      localStorage.setItem("av_user", JSON.stringify(userData));
-      setUser(userData);
+      localStorage.setItem("av_user", JSON.stringify(newUser));
     } catch (e) {
       console.error("Failed to save session", e);
     }
   };
 
   const logout = () => {
+    setUser(null);
     try {
       localStorage.removeItem("av_user");
-      setUser(null);
     } catch (e) {
-      console.error("Failed to clear session", e);
+      console.error("Failed to remove session", e);
     }
   };
 

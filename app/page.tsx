@@ -9,9 +9,10 @@ export default function LibraryPage() {
   const [cat, setCat] = useState("TODOS");
 
   const filtered = useMemo(() => {
-    return GAMES.filter(g =>
-      (cat === "TODOS" || g.cat === cat) &&
-      g.title.toLowerCase().includes(q.toLowerCase())
+    return GAMES.filter(
+      (g) =>
+        (cat === "TODOS" || g.cat === cat) &&
+        g.title.toLowerCase().includes(q.toLowerCase())
     );
   }, [q, cat]);
 
@@ -19,7 +20,9 @@ export default function LibraryPage() {
     <div className="fade-in">
       <section className="av-hero">
         <h1 className="flicker">ARCADE VAULT</h1>
-        <div className="sub">INSERTA UNA MONEDA PARA JUGAR <span className="blink">_</span></div>
+        <div className="sub">
+          INSERTA UNA MONEDA PARA JUGAR <span className="blink">_</span>
+        </div>
       </section>
 
       <div className="av-filters">
@@ -32,7 +35,7 @@ export default function LibraryPage() {
           />
         </div>
         <div className="av-chips">
-          {CATS.map(c => (
+          {CATS.map((c) => (
             <button
               key={c}
               className={`chip ${cat === c ? "active" : ""}`}
@@ -45,12 +48,26 @@ export default function LibraryPage() {
       </div>
 
       <div className="av-grid">
-        {filtered.map(g => (
+        {filtered.map((g) => (
           <GameCard key={g.id} game={g} />
         ))}
         {filtered.length === 0 && (
-          <div style={{ gridColumn: "1 / -1", textAlign: "center", padding: 80, color: "var(--ink-faint)" }}>
-            <div className="pixel" style={{ fontSize: 14, color: "var(--magenta)", marginBottom: 12 }}>
+          <div
+            style={{
+              gridColumn: "1 / -1",
+              textAlign: "center",
+              padding: 80,
+              color: "var(--ink-faint)",
+            }}
+          >
+            <div
+              className="pixel"
+              style={{
+                fontSize: 14,
+                color: "var(--magenta)",
+                marginBottom: 12,
+              }}
+            >
               NO HAY RESULTADOS
             </div>
             <div>Intenta otra búsqueda o categoría.</div>

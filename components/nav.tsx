@@ -12,7 +12,7 @@ export default function Nav() {
 
   const isActive = (path: string) => {
     if (path === "/") {
-      return pathname === "/" || pathname.startsWith("/juego/");
+      return pathname === "/" || pathname.startsWith("/juego");
     }
     return pathname === path;
   };
@@ -26,6 +26,7 @@ export default function Nav() {
             ARCADE <span className="neon-magenta">VAULT</span>
           </div>
         </Link>
+
         <div className="links">
           <Link
             href="/"
@@ -42,11 +43,14 @@ export default function Nav() {
             Salón de la Fama
           </Link>
         </div>
+
         <div className="spacer"></div>
+
         <div className="coin-counter">
           <span className="coin"></span>
           <span>CRÉDITOS · 03</span>
         </div>
+
         {user ? (
           <button className="btn ghost auth-btn" onClick={logout}>
             {user.name} ▾
@@ -56,6 +60,7 @@ export default function Nav() {
             Iniciar Sesión
           </Link>
         )}
+
         <button
           className="btn ghost hamburger"
           onClick={() => setOpen(true)}
@@ -69,6 +74,7 @@ export default function Nav() {
         className={`av-mobile-backdrop ${open ? "open" : ""}`}
         onClick={() => setOpen(false)}
       ></div>
+
       <aside className={`av-mobile-panel ${open ? "open" : ""}`}>
         <div className="pixel neon-cyan" style={{ fontSize: 11, marginBottom: 16 }}>
           MENÚ
