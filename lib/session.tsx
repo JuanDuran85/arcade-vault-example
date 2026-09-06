@@ -17,12 +17,6 @@ interface SessionContextType {
     name: string,
   ) => Promise<{ error: string | null }>;
   logout: () => Promise<void>;
-  saveScore: (entry: {
-    game: string;
-    score: number;
-    name: string;
-    at: number;
-  }) => void;
 }
 
 const SessionContext = createContext<SessionContextType | undefined>(undefined);
@@ -83,26 +77,8 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
     await supabase.auth.signOut();
   };
 
-  const saveScore = (entry: {
-    game: string;
-    score: number;
-    name: string;
-    at: number;
-  }) => {
-    try {
-      const saved = localStorage.getItem("av_scores");
-      const scores = saved ? JSON.parse(saved) : [];
-      scores.push(entry);
-      localStorage.setItem("av_scores", JSON.stringify(scores));
-    } catch (e) {
-      console.error("Failed to save score", e);
-    }
-  };
-
   return (
-    <SessionContext.Provider
-      value={{ user, signIn, signUp, logout, saveScore }}
-    >
+    <SessionContext.Provider value={{ user, signIn, signUp, logout }}>
       {children}
     </SessionContext.Provider>
   );

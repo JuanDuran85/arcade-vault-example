@@ -1,4 +1,6 @@
-import { GAMES, seededScores } from "@/lib/data";
+import { getGame } from "@/lib/catalog";
+import { topScores } from "@/lib/scores";
+import { createClient } from "@/lib/supabase/server";
 import { notFound } from "next/navigation";
 import React from "react";
 
@@ -9,13 +11,14 @@ interface LayoutProps {
 
 export default async function GameLayout({ children, params }: LayoutProps) {
   const { id } = await params;
-  const game = GAMES.find((g) => g.id === id);
+  const supabase = await createClient();
+  const game = await getGame(supabase, id);
 
   if (!game) {
     notFound();
   }
 
-  const scores = seededScores(id.length * 17 + 3, 10);
+  const scores = await topScores(supabase, { gameId: id, limit: 10 });
 
   return (
     <div className="av-detail fade-in">
@@ -25,7 +28,7 @@ export default async function GameLayout({ children, params }: LayoutProps) {
           <h3>MEJORES PUNTUACIONES</h3>
           {scores.map((r, i) => (
             <div
-              key={r.name}
+              key={r.name + i}
               className={`lb-row ${
                 i === 0 ? " top1" : i === 1 ? " top2" : i === 2 ? " top3" : ""
               }`}
@@ -46,6 +49,11 @@ export default async function GameLayout({ children, params }: LayoutProps) {
               <div className="sc">{r.score.toLocaleString("es-ES")}</div>
             </div>
           ))}
+          {scores.length === 0 && (
+            <div className="lb-empty">
+              SÉ EL PRIMERO EN ENTRAR AL SALÓN DE LA FAMA
+            </div>
+          )}
         </div>
       </aside>
     </div>

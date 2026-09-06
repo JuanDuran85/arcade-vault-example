@@ -2784,3 +2784,26 @@ a {
 .term-body .caret {
   animation: blink 1s steps(1) infinite;
 }
+
+/* Estado vacío del leaderboard (barra lateral del juego y Salón de la Fama). */
+.lb-empty {
+  padding: 28px 18px;
+  text-align: center;
+  font-family: var(--pixel);
+  font-size: 9px;
+  line-height: 1.9;
+  letter-spacing: 0.16em;
+  color: var(--ink-faint);
+}
+
+/* El tab GLOBAL del Salón añade la columna JUEGO. */
+.hall-table.global .th,
+.hall-table.global .tr {
+  grid-template-columns: 70px 1fr 1fr 1fr 140px;
+}
+@media (max-width: 720px) {
+  .hall-table.global .th,
+  .hall-table.global .tr {
+    grid-template-columns: 50px 1fr 1fr 90px 90px;
+  }
+}

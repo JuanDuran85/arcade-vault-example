@@ -34,11 +34,16 @@ No test runner is configured yet.
 
 ### Data & session
 
-Everything is mock/client-side — there is no database or real backend yet:
+The catalog and the leaderboard are real Supabase data (SPEC 06). Types live in `lib/types.ts`.
 
-- `lib/data.ts` — the game catalog (`GAMES`) and `seededScores()`, a seeded PRNG that fabricates deterministic leaderboard rows per game id. Types live in `lib/types.ts`.
-- `lib/session.tsx` — `SessionProvider`/`useSession()`, a client-only auth stand-in backed by `localStorage` (`av_user`, `av_scores`). No server session, no password check.
-- `app/juego/[id]/jugar/client.tsx` — the "gameplay" screen. For `id === "rocas"` it mounts a real canvas Asteroids (`lib/games/asteroids.ts`, ported from `references/started-games/02-asteroids/game.js`): real score, lives, levels, and `saveScore` on game over. **Every other id is still the decorative simulation**: score ticks up on a `setInterval`, enemies/ship are static CSS elements. No registry `id → game` yet — one real game doesn't justify it.
+- **Tables** (`supabase/migrations/`) — `public.games` is the catalog and `public.scores` one row per finished game, with `scores.game_id` a FK to `games.id`. The view `public.game_stats` is `games` plus `best`/`plays` aggregated at query time; nothing stores those. RLS: everyone reads both tables, anyone (signed in or not) inserts a score, and **nobody writes `games` from the app** — it is edited by migration only. `scores.user_id` is filled by the column default `auth.uid()` (null for anonymous players) and **is not read anywhere yet**.
+- **`games` holds only games that really exist** — today one row, `rocas`. The 7 placeholders of SPEC 01 are gone from the code, so their ids 404. A game exists ⇔ it has a row here ⇔ it has code in `lib/games/`; there is no `playable` column and no `id === "rocas"` check any more.
+- `lib/catalog.ts` — `getGames()` / `getGame()` read `game_stats`. Errors **throw** on purpose: there is no fallback to local data, because a stale catalog is worse than a visible error. `getGame` returning `null` means "no such game" and only that, so callers can `notFound()` on it safely.
+- `lib/scores.ts` — `topScores()` (no `gameId` = global ranking) and `saveScore()`. `topScores` never throws: it logs and returns `[]`, so a broken leaderboard cannot take down the game page. `saveScore` never sends `user_id` (the column default does it) and remembers the player name in `localStorage["av_player_name"]`.
+- `lib/data.ts` — only `CATS` survives; `GAMES`, `PLAYERS` and `seededScores()` are gone.
+- `lib/session.tsx` — `SessionProvider`/`useSession()` over real Supabase Auth (SPEC 04). It no longer knows anything about scores: **saving a score does not consult the session**, and `av_scores` no longer exists.
+- Screens that need the catalog are split `page.tsx` (Server Component, queries) + `client.tsx` (interactive part, gets data via props): `/`, `/biblioteca`, `/salon-de-la-fama`. `/juego/[id]` queries in both `layout.tsx` (the leaderboard sidebar) and `page.tsx` (the game) because Next.js cannot pass props from a layout to its page.
+- `app/juego/[id]/jugar/client.tsx` — the play screen, now always a real canvas Asteroids (`lib/games/asteroids.ts`, ported from `references/started-games/02-asteroids/game.js`). Game over writes to `public.scores`. No registry `id → game` yet — one real game doesn't justify it.
 
 ### Routes
 
@@ -56,5 +61,6 @@ Spec-driven development using the `/spec` and `/spec-impl` skills from [Klerith/
 
 - `RESEND_API_KEY` — clave de Resend usada por `app/api/contact/route.ts`. Sin prefijo `NEXT_PUBLIC_`: nunca llega al cliente. Ver `.env.example`.
 - `SUPABASE_DB_PASSWORD` — present in `.env.example`, reserved for a future direct Postgres connection; nothing currently reads it.
+- **Migrations** live in `supabase/migrations/` and are applied to the remote project with the Supabase MCP `apply_migration`. There is no Supabase CLI set up in this repo, so the remote history's timestamps do not match the local filenames.
 - `NEXT_PUBLIC_SUPABASE_URL` / `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` — used by `lib/supabase/client.ts` and `lib/supabase/server.ts` for Supabase Auth. `NEXT_PUBLIC_` prefix means these reach the client; that's expected, they're the publishable key, not a secret. Ver `.env.example`.
 - **Manual one-time step**: in the Supabase dashboard, under Authentication → Providers → Email, disable "Confirm email" — otherwise signup won't leave the user logged in immediately.
