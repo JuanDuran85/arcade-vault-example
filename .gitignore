@@ -193,3 +193,5 @@ vite.config.ts.timestamp-*
 next-env.d.ts
 .playwright-mcp
 .playwright-screenshots/
+.agents
+.claude/skills
