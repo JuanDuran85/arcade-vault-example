@@ -6,15 +6,31 @@ import { useSession } from "@/lib/session";
 
 export default function AuthPage() {
   const router = useRouter();
-  const { login } = useSession();
+  const { signIn, signUp } = useSession();
   const [tab, setTab] = useState("in");
   const [user, setUser] = useState("");
   const [pass, setPass] = useState("");
   const [email, setEmail] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
 
-  const submit = (e: React.FormEvent) => {
+  const submit = async (e: React.FormEvent) => {
     e.preventDefault();
-    login((user || "PLAYER1").toUpperCase().slice(0, 10));
+    setError(null);
+    setSubmitting(true);
+    const { error } =
+      tab === "in"
+        ? await signIn(email, pass)
+        : await signUp(
+            email,
+            pass,
+            (user || "PLAYER1").toUpperCase().slice(0, 10),
+          );
+    setSubmitting(false);
+    if (error) {
+      setError(error);
+      return;
+    }
     router.push("/");
   };
 
@@ -31,40 +47,54 @@ export default function AuthPage() {
         <div className="auth-header">
           <div className="mark"></div>
           <h2 className="neon-cyan">ARCADE VAULT</h2>
-          <div className="mono" style={{ fontSize: 11, color: "var(--ink-faint)", letterSpacing: "0.16em", marginTop: 6 }}>
+          <div
+            className="mono"
+            style={{
+              fontSize: 11,
+              color: "var(--ink-faint)",
+              letterSpacing: "0.16em",
+              marginTop: 6,
+            }}
+          >
             ACCESO AL SISTEMA · v2.6
           </div>
         </div>
 
         <div className="auth-tabs">
-          <button className={tab === "in" ? "on" : ""} onClick={() => setTab("in")}>
+          <button
+            className={tab === "in" ? "on" : ""}
+            onClick={() => setTab("in")}
+          >
             INICIAR SESIÓN
           </button>
-          <button className={tab === "up" ? "on" : ""} onClick={() => setTab("up")}>
+          <button
+            className={tab === "up" ? "on" : ""}
+            onClick={() => setTab("up")}
+          >
             CREAR CUENTA
           </button>
         </div>
 
         <form onSubmit={submit}>
-          <div className="field">
-            <label>Usuario</label>
-            <input
-              value={user}
-              onChange={(e) => setUser(e.target.value)}
-              placeholder="px_kai"
-            />
-          </div>
           {tab === "up" && (
             <div className="field slide-in">
-              <label>Correo electrónico</label>
+              <label>Usuario</label>
               <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="jugador@vault.gg"
+                value={user}
+                onChange={(e) => setUser(e.target.value)}
+                placeholder="px_kai"
               />
             </div>
           )}
+          <div className="field">
+            <label>Correo electrónico</label>
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="jugador@vault.gg"
+            />
+          </div>
           <div className="field">
             <label>Contraseña</label>
             <input
@@ -74,9 +104,29 @@ export default function AuthPage() {
               placeholder="••••••••"
             />
           </div>
+          {error && (
+            <div
+              className="field"
+              role="alert"
+              style={{ color: "var(--magenta, #ff3ea5)" }}
+            >
+              &gt; {error}
+            </div>
+          )}
 
-          <button className="btn lg" type="submit" style={{ width: "100%", marginTop: 8 }}>
-            {tab === "in" ? "ENTRAR AL VAULT" : "CREAR Y JUGAR"}
+          <button
+            className="btn lg"
+            type="submit"
+            disabled={submitting}
+            style={{ width: "100%", marginTop: 8 }}
+          >
+            {submitting
+              ? tab === "in"
+                ? "ENTRANDO…"
+                : "CREANDO…"
+              : tab === "in"
+                ? "ENTRAR AL VAULT"
+                : "CREAR Y JUGAR"}
           </button>
         </form>
 
@@ -90,8 +140,12 @@ export default function AuthPage() {
 
         <div className="auth-divider">O CONTINÚA CON</div>
         <div className="social">
-          <button className="btn ghost" type="button">◆  GOOGLE</button>
-          <button className="btn ghost" type="button">▣  GITHUB</button>
+          <button className="btn ghost" type="button">
+            ◆ GOOGLE
+          </button>
+          <button className="btn ghost" type="button">
+            ▣ GITHUB
+          </button>
         </div>
 
         <div
