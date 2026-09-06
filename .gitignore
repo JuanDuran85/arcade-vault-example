@@ -192,3 +192,5 @@ vite.config.ts.timestamp-*
 
 next-env.d.ts
 .playwright-mcp/
+.playwright-mcp
+.playwright-screenshots/

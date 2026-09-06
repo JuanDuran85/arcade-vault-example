@@ -1,0 +1,15 @@
+{
+  "hooks": {
+    "Notification": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "powershell -ExecutionPolicy Bypass -File \"D:\\code_repos\\claude_code_examples\\05-arcade-vault\\.claude\\hooks\\play-sound.ps1\""
+          }
+        ]
+      }
+    ]
+  }
+}
