@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { GAMES, seededScores } from "@/lib/data";
+import { GAMES } from "@/lib/data";
 import { notFound } from "next/navigation";
 
 interface PageProps {
@@ -13,8 +13,6 @@ export default async function GameDetailPage({ params }: PageProps) {
   if (!game) {
     notFound();
   }
-
-  const scores = seededScores(id.length * 17 + 3, 10);
 
   return (
     <div>
@@ -73,5 +71,4 @@ export default async function GameDetailPage({ params }: PageProps) {
       </div>
     </div>
   );
-
 }

@@ -38,7 +38,7 @@ Everything is mock/client-side — there is no database or real backend yet:
 
 - `lib/data.ts` — the game catalog (`GAMES`) and `seededScores()`, a seeded PRNG that fabricates deterministic leaderboard rows per game id. Types live in `lib/types.ts`.
 - `lib/session.tsx` — `SessionProvider`/`useSession()`, a client-only auth stand-in backed by `localStorage` (`av_user`, `av_scores`). No server session, no password check.
-- `app/juego/[id]/jugar/client.tsx` — the "gameplay" screen is a decorative simulation: score ticks up on a `setInterval`, enemies/ship are static CSS elements. There is no real game engine or collision logic behind any title yet, despite `lib/data.ts` listing distinct games.
+- `app/juego/[id]/jugar/client.tsx` — the "gameplay" screen. For `id === "rocas"` it mounts a real canvas Asteroids (`lib/games/asteroids.ts`, ported from `references/started-games/02-asteroids/game.js`): real score, lives, levels, and `saveScore` on game over. **Every other id is still the decorative simulation**: score ticks up on a `setInterval`, enemies/ship are static CSS elements. No registry `id → game` yet — one real game doesn't justify it.
 
 ### Routes
 
