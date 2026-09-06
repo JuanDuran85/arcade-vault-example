@@ -3,6 +3,8 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import Link from "next/link";
 import { useSession } from "@/lib/session";
+import { saveScore } from "@/lib/scores";
+import { createClient } from "@/lib/supabase/client";
 import type { Game } from "@/lib/types";
 import {
   startAsteroids,
@@ -41,36 +43,50 @@ export default function GamePlayerClient({
   game: Game;
   id: string;
 }) {
-  const isAsteroids = id === "rocas";
   const handleRef = useRef<AsteroidsHandle | null>(null);
   const [runId, setRunId] = useState(0);
-  const { user, saveScore } = useSession();
+  const { user } = useSession();
   const [score, setScore] = useState(0);
   const [lives, setLives] = useState(3);
   const [level, setLevel] = useState(1);
   const [paused, setPaused] = useState(false);
   const [over, setOver] = useState(false);
-  const [name, setName] = useState(user ? user.name : "INVITADO");
+  const [name, setName] = useState("");
   const [saved, setSaved] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
+  // El nombre de sesión se lee por ref: meterlo en las dependencias de
+  // onGameState remontaría el canvas y reiniciaría la partida.
+  const userNameRef = useRef<string | null>(null);
   useEffect(() => {
-    if (isAsteroids || over || paused) return;
-    const t = setInterval(() => {
-      setScore((s) => {
-        const next = s + Math.floor(10 + Math.random() * 90);
-        setLevel(1 + Math.floor(next / 2500));
-        return next;
-      });
-    }, 220);
-    return () => clearInterval(t);
-  }, [isAsteroids, over, paused]);
+    userNameRef.current = user?.name ?? null;
+  }, [user]);
 
-  const onGameState = useCallback((s: AsteroidsState) => {
-    setScore(s.score);
-    setLives(s.lives);
-    setLevel(s.level);
-    if (s.gameOver) setOver(true);
+  // Se resuelve al abrir el modal, no al montar: localStorage no existe en el
+  // render del servidor. El updater nunca pisa lo que el jugador ya escribió.
+  const recallName = useCallback(() => {
+    setName(
+      (current) =>
+        current ||
+        localStorage.getItem("av_player_name") ||
+        userNameRef.current ||
+        "",
+    );
   }, []);
+
+  const onGameState = useCallback(
+    (s: AsteroidsState) => {
+      setScore(s.score);
+      setLives(s.lives);
+      setLevel(s.level);
+      if (s.gameOver) {
+        setOver(true);
+        recallName();
+      }
+    },
+    [recallName],
+  );
 
   const togglePause = () => {
     setPaused((p) => {
@@ -82,7 +98,9 @@ export default function GamePlayerClient({
   const endGame = () => {
     handleRef.current?.endGame();
     setOver(true);
+    recallName();
   };
+
   const restart = () => {
     setScore(0);
     setLives(3);
@@ -90,17 +108,19 @@ export default function GamePlayerClient({
     setPaused(false);
     setOver(false);
     setSaved(false);
-    if (isAsteroids) setRunId((r) => r + 1); // remonta el canvas → partida nueva
+    setError(null);
+    setRunId((r) => r + 1); // remonta el canvas → partida nueva
   };
 
-  const handleSave = () => {
-    saveScore({
-      game: id,
-      score,
-      name: name.toUpperCase().slice(0, 10),
-      at: Date.now(),
-    });
-    setSaved(true);
+  const handleSave = async () => {
+    setSaving(true);
+    setError(null);
+
+    const result = await saveScore(createClient(), { gameId: id, name, score });
+
+    setSaving(false);
+    if (result.error) setError(result.error);
+    else setSaved(true);
   };
 
   return (
@@ -110,7 +130,7 @@ export default function GamePlayerClient({
           <div className="hud-stat">
             <div className="l">Jugador</div>
             <div className="v" style={{ color: "var(--ink)" }}>
-              {name}
+              {name || "INVITADO"}
             </div>
           </div>
           <div className="hud-stat">
@@ -141,21 +161,11 @@ export default function GamePlayerClient({
 
       <div className="crt">
         <div className="crt-screen">
-          {isAsteroids ? (
-            <AsteroidsCanvas
-              key={runId}
-              onState={onGameState}
-              handleRef={handleRef}
-            />
-          ) : (
-            <div className="game-arena">
-              <div className="grid-floor"></div>
-              <div className="enemy e1"></div>
-              <div className="enemy e2"></div>
-              <div className="enemy e3"></div>
-              <div className="player-ship"></div>
-            </div>
-          )}
+          <AsteroidsCanvas
+            key={runId}
+            onState={onGameState}
+            handleRef={handleRef}
+          />
           {paused && (
             <div
               className="crt-content"
@@ -185,11 +195,9 @@ export default function GamePlayerClient({
           <span>{game.title} · CRT-83 · 60 HZ</span>
           <span>CARGA · 1MB</span>
         </div>
-        {isAsteroids && (
-          <div className="game-controls mono">
-            ← → ROTAR · ↑ PROPULSAR · ESPACIO DISPARAR
-          </div>
-        )}
+        <div className="game-controls mono">
+          ← → ROTAR · ↑ PROPULSAR · ESPACIO DISPARAR
+        </div>
       </div>
 
       {over && (
@@ -203,18 +211,33 @@ export default function GamePlayerClient({
               {score.toLocaleString("es-ES")}
             </div>
             {!saved ? (
-              <div className="input-row">
-                <input
-                  value={name}
-                  onChange={(e) =>
-                    setName(e.target.value.toUpperCase().slice(0, 10))
-                  }
-                  placeholder="TUS INICIALES"
-                />
-                <button className="btn yellow" onClick={handleSave}>
-                  GUARDAR PUNTUACIÓN
-                </button>
-              </div>
+              <>
+                <div className="input-row">
+                  <input
+                    value={name}
+                    onChange={(e) =>
+                      setName(e.target.value.toUpperCase().slice(0, 12))
+                    }
+                    placeholder="TUS INICIALES"
+                  />
+                  <button
+                    className="btn yellow"
+                    onClick={handleSave}
+                    disabled={saving || !name.trim()}
+                  >
+                    {saving ? "GUARDANDO…" : "GUARDAR PUNTUACIÓN"}
+                  </button>
+                </div>
+                {error && (
+                  <div
+                    className="field"
+                    role="alert"
+                    style={{ color: "var(--magenta, #ff3ea5)" }}
+                  >
+                    &gt; {error}
+                  </div>
+                )}
+              </>
             ) : (
               <div className="toast-saved">▸ PUNTUACIÓN GUARDADA_</div>
             )}

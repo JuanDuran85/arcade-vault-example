@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { GAMES } from "@/lib/data";
+import { getGame } from "@/lib/catalog";
+import { createClient } from "@/lib/supabase/server";
 import { notFound } from "next/navigation";
 
 interface PageProps {
@@ -8,7 +9,7 @@ interface PageProps {
 
 export default async function GameDetailPage({ params }: PageProps) {
   const { id } = await params;
-  const game = GAMES.find((g) => g.id === id);
+  const game = await getGame(await createClient(), id);
 
   if (!game) {
     notFound();
@@ -32,7 +33,7 @@ export default async function GameDetailPage({ params }: PageProps) {
           <div className="stat-strip">
             <div>
               <div className="l">Partidas</div>
-              <div className="v">{game.plays}</div>
+              <div className="v">{game.plays.toLocaleString("es-ES")}</div>
             </div>
             <div>
               <div className="l">Mejor global</div>
@@ -43,7 +44,7 @@ export default async function GameDetailPage({ params }: PageProps) {
                   textShadow: "0 0 6px rgba(255,0,110,0.5)",
                 }}
               >
-                {game.best.toLocaleString("es-ES")}
+                {game.best ? game.best.toLocaleString("es-ES") : "—"}
               </div>
             </div>
             <div>

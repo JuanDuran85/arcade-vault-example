@@ -1,6 +1,7 @@
 import React from "react";
-import Link from "next/link";
-import { GAMES } from "@/lib/data";
+import { getGame } from "@/lib/catalog";
+import { createClient } from "@/lib/supabase/server";
+import { notFound } from "next/navigation";
 import GamePlayerClient from "./client";
 
 interface PageProps {
@@ -9,17 +10,10 @@ interface PageProps {
 
 export default async function GamePlayerPage({ params }: PageProps) {
   const { id } = await params;
-  const game = GAMES.find((g) => g.id === id);
+  const game = await getGame(await createClient(), id);
 
   if (!game) {
-    return (
-      <div className="fade-in" style={{ textAlign: "center", padding: 80 }}>
-        <h2 className="neon-magenta">JUEGO NO ENCONTRADO</h2>
-        <Link href="/" className="btn ghost" style={{ marginTop: 20 }}>
-          VOLVER AL VAULT
-        </Link>
-      </div>
-    );
+    notFound();
   }
 
   return <GamePlayerClient game={game} id={id} />;
