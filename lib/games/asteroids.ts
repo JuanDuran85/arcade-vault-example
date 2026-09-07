@@ -1,18 +1,7 @@
 // Ported almost verbatim from references/started-games/02-asteroids/game.js.
 // Everything lives inside startAsteroids() so two mounts never share state.
 
-export interface AsteroidsState {
-  score: number;
-  lives: number;
-  level: number;
-  gameOver: boolean;
-}
-
-export interface AsteroidsHandle {
-  stop(): void;
-  setPaused(paused: boolean): void;
-  endGame(): void;
-}
+import type { GameCallbacks, GameHandle, GameState } from "./registry";
 
 interface Point {
   x: number;
@@ -42,8 +31,8 @@ const GAME_KEYS = ["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown", "Space"];
 
 export function startAsteroids(
   canvas: HTMLCanvasElement,
-  onState: (state: AsteroidsState) => void,
-): AsteroidsHandle {
+  { onState, onGameOver }: GameCallbacks,
+): GameHandle {
   canvas.width = W;
   canvas.height = H;
   const ctx = canvas.getContext("2d")!;
@@ -395,6 +384,7 @@ export function startAsteroids(
     lives = 3;
     level = 1;
     state = "playing";
+    gameOverSent = false;
     spawnAsteroids(4);
   }
 
@@ -418,7 +408,7 @@ export function startAsteroids(
     ship.dead = true;
     lives--;
     if (lives <= 0) {
-      state = "gameover";
+      finish();
     } else {
       state = "dead";
       deadTimer = 2;
@@ -573,29 +563,29 @@ export function startAsteroids(
   }
 
   // ── Notificación de estado a React ──────────────────────────────────────────
-  let last: AsteroidsState = {
-    score: -1,
-    lives: -1,
-    level: -1,
-    gameOver: false,
-  };
+  let last: GameState = { score: -1, lives: -1, level: -1 };
 
   function notify() {
-    const next: AsteroidsState = {
-      score,
-      lives,
-      level,
-      gameOver: state === "gameover",
-    };
+    const next: GameState = { score, lives, level };
     if (
       next.score !== last.score ||
       next.lives !== last.lives ||
-      next.level !== last.level ||
-      next.gameOver !== last.gameOver
+      next.level !== last.level
     ) {
       last = next;
       onState(next);
     }
+  }
+
+  // El fin de partida es un evento y se emite una sola vez por partida.
+  let gameOverSent = false;
+
+  function finish() {
+    state = "gameover";
+    notify();
+    if (gameOverSent) return;
+    gameOverSent = true;
+    onGameOver(score);
   }
 
   // ── Loop principal ──────────────────────────────────────────────────────────
@@ -629,8 +619,7 @@ export function startAsteroids(
       if (!p) lastTime = null; // evita el salto de dt al reanudar
     },
     endGame() {
-      state = "gameover";
-      notify();
+      finish();
     },
   };
 }
