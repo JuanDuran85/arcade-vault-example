@@ -6,32 +6,43 @@ import { useSession } from "@/lib/session";
 import { saveScore } from "@/lib/scores";
 import { createClient } from "@/lib/supabase/client";
 import type { Game } from "@/lib/types";
-import {
-  startAsteroids,
-  type AsteroidsHandle,
-  type AsteroidsState,
-} from "@/lib/games/asteroids";
+import { GAMES, type GameHandle, type GameState } from "@/lib/games/registry";
 
-function AsteroidsCanvas({
+// Todos los juegos arrancan sin puntos; el juego notifica sus vidas reales en
+// el primer notify(), síncrono dentro de start().
+const INITIAL_STATE: GameState = { score: 0, lives: 0 };
+
+function GameCanvas({
+  start,
+  paused,
   onState,
+  onGameOver,
   handleRef,
 }: {
-  onState: (s: AsteroidsState) => void;
-  handleRef: React.RefObject<AsteroidsHandle | null>;
+  start: (typeof GAMES)[string]["start"];
+  paused: boolean;
+  onState: (s: GameState) => void;
+  onGameOver: (finalScore: number) => void;
+  handleRef: React.RefObject<GameHandle | null>;
 }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
-  // onState llega memoizado del padre: el juego no se reinicia en cada render.
+  // Los callbacks llegan memoizados del padre: el juego no se reinicia en
+  // cada render. `paused` va en su propio efecto por lo mismo.
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-    const handle = startAsteroids(canvas, onState);
+    const handle = start(canvas, { onState, onGameOver });
     handleRef.current = handle;
     return () => {
       handle.stop();
       handleRef.current = null;
     };
-  }, [onState, handleRef]);
+  }, [start, onState, onGameOver, handleRef]);
+
+  useEffect(() => {
+    handleRef.current?.setPaused(paused);
+  }, [paused, handleRef]);
 
   return <canvas ref={canvasRef} className="game-canvas" />;
 }
@@ -43,12 +54,11 @@ export default function GamePlayerClient({
   game: Game;
   id: string;
 }) {
-  const handleRef = useRef<AsteroidsHandle | null>(null);
+  const entry = GAMES[id];
+  const handleRef = useRef<GameHandle | null>(null);
   const [runId, setRunId] = useState(0);
   const { user } = useSession();
-  const [score, setScore] = useState(0);
-  const [lives, setLives] = useState(3);
-  const [level, setLevel] = useState(1);
+  const [state, setState] = useState<GameState>(INITIAL_STATE);
   const [paused, setPaused] = useState(false);
   const [over, setOver] = useState(false);
   const [name, setName] = useState("");
@@ -75,36 +85,24 @@ export default function GamePlayerClient({
     );
   }, []);
 
-  const onGameState = useCallback(
-    (s: AsteroidsState) => {
-      setScore(s.score);
-      setLives(s.lives);
-      setLevel(s.level);
-      if (s.gameOver) {
-        setOver(true);
-        recallName();
-      }
+  const onGameState = useCallback((s: GameState) => setState(s), []);
+
+  const onGameOver = useCallback(
+    (finalScore: number) => {
+      setState((s) => ({ ...s, score: finalScore }));
+      setOver(true);
+      recallName();
     },
     [recallName],
   );
 
-  const togglePause = () => {
-    setPaused((p) => {
-      handleRef.current?.setPaused(!p);
-      return !p;
-    });
-  };
+  const togglePause = () => setPaused((p) => !p);
 
-  const endGame = () => {
-    handleRef.current?.endGame();
-    setOver(true);
-    recallName();
-  };
+  // El modal lo abre onGameOver, por el que el juego acaba pasando.
+  const endGame = () => handleRef.current?.endGame();
 
   const restart = () => {
-    setScore(0);
-    setLives(3);
-    setLevel(1);
+    setState(INITIAL_STATE);
     setPaused(false);
     setOver(false);
     setSaved(false);
@@ -116,7 +114,11 @@ export default function GamePlayerClient({
     setSaving(true);
     setError(null);
 
-    const result = await saveScore(createClient(), { gameId: id, name, score });
+    const result = await saveScore(createClient(), {
+      gameId: id,
+      name,
+      score: state.score,
+    });
 
     setSaving(false);
     if (result.error) setError(result.error);
@@ -135,16 +137,24 @@ export default function GamePlayerClient({
           </div>
           <div className="hud-stat">
             <div className="l">Puntuación</div>
-            <div className="v">{score.toLocaleString("es-ES")}</div>
+            <div className="v">{state.score.toLocaleString("es-ES")}</div>
           </div>
           <div className="hud-stat lives">
             <div className="l">Vidas</div>
-            <div className="v">{"♥ ".repeat(lives).trim() || "—"}</div>
+            <div className="v">{"♥ ".repeat(state.lives).trim() || "—"}</div>
           </div>
-          <div className="hud-stat level">
-            <div className="l">Nivel</div>
-            <div className="v">{String(level).padStart(2, "0")}</div>
-          </div>
+          {state.level !== undefined && (
+            <div className="hud-stat level">
+              <div className="l">Nivel</div>
+              <div className="v">{String(state.level).padStart(2, "0")}</div>
+            </div>
+          )}
+          {state.lines !== undefined && (
+            <div className="hud-stat">
+              <div className="l">Líneas</div>
+              <div className="v">{state.lines.toLocaleString("es-ES")}</div>
+            </div>
+          )}
         </div>
         <div className="hud-actions">
           <button className="btn yellow" onClick={togglePause}>
@@ -161,9 +171,12 @@ export default function GamePlayerClient({
 
       <div className="crt">
         <div className="crt-screen">
-          <AsteroidsCanvas
+          <GameCanvas
             key={runId}
+            start={entry.start}
+            paused={paused}
             onState={onGameState}
+            onGameOver={onGameOver}
             handleRef={handleRef}
           />
           {paused && (
@@ -195,9 +208,7 @@ export default function GamePlayerClient({
           <span>{game.title} · CRT-83 · 60 HZ</span>
           <span>CARGA · 1MB</span>
         </div>
-        <div className="game-controls mono">
-          ← → ROTAR · ↑ PROPULSAR · ESPACIO DISPARAR
-        </div>
+        <div className="game-controls mono">{entry.controls}</div>
       </div>
 
       {over && (
@@ -208,7 +219,7 @@ export default function GamePlayerClient({
               PUNTUACIÓN FINAL
             </div>
             <div className="final" style={{ textAlign: "center" }}>
-              {score.toLocaleString("es-ES")}
+              {state.score.toLocaleString("es-ES")}
             </div>
             {!saved ? (
               <>
