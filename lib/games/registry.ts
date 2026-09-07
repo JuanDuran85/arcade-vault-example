@@ -1,5 +1,6 @@
 // Alta de un juego nuevo: un módulo en lib/games/ y una entrada en GAMES.
 import { startAsteroids } from "./asteroids";
+import { startBloques } from "./bloques";
 import { startCaida } from "./caida";
 
 export interface GameState {
@@ -33,5 +34,9 @@ export const GAMES: Record<string, GameEntry> = {
   caida: {
     start: startCaida,
     controls: "← → MOVER · ↑ ROTAR · ↓ BAJAR · ESPACIO SOLTAR",
+  },
+  bloques: {
+    start: startBloques,
+    controls: "← → MOVER PALETA · O MUEVE EL RATÓN",
   },
 };
