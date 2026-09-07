@@ -15,12 +15,14 @@ const INITIAL_STATE: GameState = { score: 0, lives: 0 };
 function GameCanvas({
   start,
   paused,
+  muted,
   onState,
   onGameOver,
   handleRef,
 }: {
   start: (typeof GAMES)[string]["start"];
   paused: boolean;
+  muted: boolean;
   onState: (s: GameState) => void;
   onGameOver: (finalScore: number) => void;
   handleRef: React.RefObject<GameHandle | null>;
@@ -44,6 +46,11 @@ function GameCanvas({
     handleRef.current?.setPaused(paused);
   }, [paused, handleRef]);
 
+  // Propio efecto por lo mismo que paused. El ?. cubre a los juegos sin sonido.
+  useEffect(() => {
+    handleRef.current?.setMuted?.(muted);
+  }, [muted, handleRef]);
+
   return <canvas ref={canvasRef} className="game-canvas" />;
 }
 
@@ -60,6 +67,9 @@ export default function GamePlayerClient({
   const { user } = useSession();
   const [state, setState] = useState<GameState>(INITIAL_STATE);
   const [paused, setPaused] = useState(false);
+  const [muted, setMuted] = useState(
+    () => typeof window !== "undefined" && localStorage.getItem("av_muted") === "1",
+  );
   const [over, setOver] = useState(false);
   const [name, setName] = useState("");
   const [saved, setSaved] = useState(false);
@@ -84,6 +94,13 @@ export default function GamePlayerClient({
         "",
     );
   }, []);
+
+  const toggleMuted = () =>
+    setMuted((m) => {
+      const next = !m;
+      localStorage.setItem("av_muted", next ? "1" : "0");
+      return next;
+    });
 
   const onGameState = useCallback((s: GameState) => setState(s), []);
 
@@ -160,6 +177,19 @@ export default function GamePlayerClient({
           <button className="btn yellow" onClick={togglePause}>
             {paused ? "REANUDAR" : "PAUSA"}
           </button>
+          {entry.sound && (
+            <button
+              className="btn"
+              onClick={toggleMuted}
+              aria-pressed={muted}
+              // El servidor no tiene localStorage y siempre pinta SILENCIO; si
+              // el jugador lo tenía silenciado, el cliente pinta SONIDO. Es la
+              // única diferencia y es intencional.
+              suppressHydrationWarning
+            >
+              {muted ? "SONIDO" : "SILENCIO"}
+            </button>
+          )}
           <button className="btn magenta" onClick={endGame}>
             FIN
           </button>
@@ -175,6 +205,7 @@ export default function GamePlayerClient({
             key={runId}
             start={entry.start}
             paused={paused}
+            muted={muted}
             onState={onGameState}
             onGameOver={onGameOver}
             handleRef={handleRef}
