@@ -1,6 +1,7 @@
 // Portado de references/started-games/04-arkanoid/. La mecánica es verbatim;
 // lo único que cambia es el dibujo: el original usa un spritesheet PNG y aquí
-// todo son fillRect, para no meter un asset en public/ ni un loader asíncrono.
+// todo son fillRect, para no meter un PNG en public/ ni un loader asíncrono.
+// Los dos MP3 del original sí se portan (SPEC 09), pero no necesitan carga.
 // Todo el estado vive dentro de startBloques() para que dos montajes no
 // compartan paleta ni bola. No se escribe en el DOM ni en localStorage: el
 // overlay, los botones y el ranking los pone la plataforma.
@@ -143,6 +144,21 @@ export function startBloques(
   let lastTime: number | null = null;
   let rafId = 0;
 
+  // Los dos Audio se construyen aquí, no a nivel de módulo: este archivo acaba
+  // en el grafo de un Server Component y el constructor no existe allí. El mute
+  // lo decide la plataforma vía setMuted(); el juego no lee localStorage.
+  const bounceSound = new Audio("/sounds/ball-bounce.mp3");
+  const breakSound = new Audio("/sounds/break-sound.mp3");
+  let muted = false;
+
+  // cloneNode() como el original: dos golpes seguidos se solapan en vez de
+  // cortarse. El catch se traga el rechazo de la política de autoplay, que es
+  // esperable antes del primer clic; el sonido es adorno, no mecánica.
+  function play(sound: HTMLAudioElement) {
+    if (muted) return;
+    (sound.cloneNode() as HTMLAudioElement).play().catch(() => {});
+  }
+
   const keys = { ArrowLeft: false, ArrowRight: false };
 
   function initBall() {
@@ -218,14 +234,17 @@ export function startBloques(
     if (ball.x <= 0) {
       ball.x = 0;
       ball.vx = Math.abs(ball.vx);
+      play(bounceSound);
     }
     if (ball.x + ball.w >= W) {
       ball.x = W - ball.w;
       ball.vx = -Math.abs(ball.vx);
+      play(bounceSound);
     }
     if (ball.y <= 0) {
       ball.y = 0;
       ball.vy = Math.abs(ball.vy);
+      play(bounceSound);
     }
 
     // Rebote contra la paleta
@@ -238,6 +257,7 @@ export function startBloques(
     ) {
       ball.y = paddle.y - ball.h;
       ball.vy = -Math.abs(ball.vy);
+      play(bounceSound);
     }
 
     // Colisión con los bloques
@@ -245,6 +265,7 @@ export function startBloques(
       if (!block.alive) continue;
       if (collideAABB(block)) {
         block.alive = false;
+        play(breakSound);
         explosions.push({
           x: block.x,
           y: block.y,
@@ -396,6 +417,9 @@ export function startBloques(
     },
     endGame() {
       finish();
+    },
+    setMuted(m: boolean) {
+      muted = m;
     },
   };
 }

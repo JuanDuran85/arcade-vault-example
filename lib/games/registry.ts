@@ -19,11 +19,13 @@ export interface GameHandle {
   stop(): void; // cancela el rAF y quita los listeners de teclado
   setPaused(paused: boolean): void;
   endGame(): void; // fuerza el fin de partida; acaba emitiendo onGameOver
+  setMuted?(muted: boolean): void; // solo los juegos con sonido
 }
 
 interface GameEntry {
   start(canvas: HTMLCanvasElement, callbacks: GameCallbacks): GameHandle;
   controls: string; // fila de controles bajo el marco CRT
+  sound?: boolean; // pinta el botón de silencio; hoy solo bloques
 }
 
 export const GAMES: Record<string, GameEntry> = {
@@ -38,5 +40,6 @@ export const GAMES: Record<string, GameEntry> = {
   bloques: {
     start: startBloques,
     controls: "← → MOVER PALETA · O MUEVE EL RATÓN",
+    sound: true,
   },
 };
