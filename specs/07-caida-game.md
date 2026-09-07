@@ -1,6 +1,6 @@
 # SPEC 07 — Segundo juego real: Tetris en `/juego/caida/jugar`
 
-> **Status:** Approved
+> **Status:** Implemented
 > **Depends on:** SPEC 05, SPEC 06
 > **Date:** 2026-09-06
 > **Objective:** Portar el Tetris de `references/started-games/03-tetris/game.js` a `lib/games/caida.ts`, darle su fila en `public.games` y, al ser el segundo juego real, sustituir el import fijo de Asteroids por un registry `id → juego`.
@@ -173,29 +173,29 @@ El origen usaba dos elementos `<canvas>` (`#board` y `#next-canvas`) más un sid
 
 ## Acceptance criteria
 
-- [ ] `npm run lint` y `npm run build` terminan sin errores.
-- [ ] La migración está en el repo y `public.games` tiene la fila `caida` en el proyecto remoto; `get_advisors` no reporta avisos nuevos.
-- [ ] `/juego/caida` existe, `/biblioteca` lista dos juegos y el filtro PUZZLE muestra `CAÍDA`.
-- [ ] En `/juego/caida/jugar`: `←`/`→` mueven la pieza, `↑` y `X` la rotan, `↓` la baja una fila y `Espacio` la suelta de golpe.
-- [ ] Pulsar `P` o `Esc` **no** hace nada: la pausa solo responde al botón de la plataforma.
-- [ ] Completar una línea la borra, sube `LÍNEAS` y suma `100 × nivel`; cuatro líneas de golpe suman `800 × nivel`.
-- [ ] Cada 10 líneas sube el nivel y las piezas caen visiblemente más rápido.
-- [ ] Aparece la pieza tuerca (3×3 con un agujero) entre las 8 posibles.
-- [ ] El tablero se ve centrado en el marco CRT, con el HUD del juego y el panel SIGUIENTE a su derecha, sin recorte ni scroll horizontal en una ventana estrecha.
-- [ ] El HUD dibujado dentro del canvas muestra PUNTUACIÓN, LÍNEAS y NIVEL con el mismo contenido y orden que el sidebar del juego original, y coincide con el HUD React de la página.
-- [ ] El HUD de `caida` muestra PUNTUACIÓN, VIDAS (`♥`, una sola) , NIVEL y LÍNEAS.
-- [ ] El HUD de `rocas` sigue mostrando PUNTUACIÓN, VIDAS y NIVEL, y **no** LÍNEAS.
-- [ ] La fila de controles bajo el CRT es la del juego que se está jugando, y la de `caida` no menciona ninguna tecla de pausa.
-- [ ] `PAUSA` congela la caída pero el tablero sigue visible (no se queda en negro); `REANUDAR` no produce un salto de tiempo: la pieza no baja de golpe varias filas.
-- [ ] Pulsar flechas o espacio durante la partida no hace scroll de la página.
-- [ ] Que una pieza nueva no quepa al aparecer emite `onGameOver` y abre el modal `FIN DEL JUEGO` de la plataforma con la puntuación real; `GUARDAR PUNTUACIÓN` la escribe en `public.scores` con `game_id = 'caida'`.
-- [ ] El juego no dibuja ningún overlay propio de GAME OVER ni de PAUSA, y no escribe nada en `localStorage` (`grep` limpio de `localStorage` en `lib/games/caida.ts`).
-- [ ] El botón `FIN` acaba en el mismo modal, con la puntuación acumulada hasta ese momento.
-- [ ] Esa puntuación aparece entre las 10 de la barra lateral de `/juego/caida`, en el tab `CAÍDA` del Salón de la Fama y en el tab `GLOBAL`, sin haber tocado `layout.tsx` ni `salon-de-la-fama/client.tsx`.
-- [ ] Salir de la pantalla detiene el `requestAnimationFrame` y quita los listeners de `keydown`: volver a entrar no duplica el juego ni acelera la caída, y las teclas no siguen respondiendo fuera de la pantalla de juego.
-- [ ] `JUGAR DE NUEVO` empieza una partida nueva con el tablero vacío y 0 puntos.
-- [ ] `/juego/rocas/jugar` se juega exactamente igual que antes de este spec.
-- [ ] Un id que no está en `games` (por ejemplo `/juego/serpentina`) sigue devolviendo 404.
+- [X] `npm run lint` y `npm run build` terminan sin errores.
+- [X] La migración está en el repo y `public.games` tiene la fila `caida` en el proyecto remoto; `get_advisors` no reporta avisos nuevos.
+- [X] `/juego/caida` existe, `/biblioteca` lista dos juegos y el filtro PUZZLE muestra `CAÍDA`.
+- [X] En `/juego/caida/jugar`: `←`/`→` mueven la pieza, `↑` y `X` la rotan, `↓` la baja una fila y `Espacio` la suelta de golpe.
+- [X] Pulsar `P` o `Esc` **no** hace nada: la pausa solo responde al botón de la plataforma.
+- [X] Completar una línea la borra, sube `LÍNEAS` y suma `100 × nivel`; cuatro líneas de golpe suman `800 × nivel`.
+- [X] Cada 10 líneas sube el nivel y las piezas caen visiblemente más rápido.
+- [X] Aparece la pieza tuerca (3×3 con un agujero) entre las 8 posibles.
+- [X] El tablero se ve centrado en el marco CRT, con el HUD del juego y el panel SIGUIENTE a su derecha, sin recorte ni scroll horizontal en una ventana estrecha.
+- [X] El HUD dibujado dentro del canvas muestra PUNTUACIÓN, LÍNEAS y NIVEL con el mismo contenido y orden que el sidebar del juego original, y coincide con el HUD React de la página.
+- [X] El HUD de `caida` muestra PUNTUACIÓN, VIDAS (`♥`, una sola) , NIVEL y LÍNEAS.
+- [X] El HUD de `rocas` sigue mostrando PUNTUACIÓN, VIDAS y NIVEL, y **no** LÍNEAS.
+- [X] La fila de controles bajo el CRT es la del juego que se está jugando, y la de `caida` no menciona ninguna tecla de pausa.
+- [X] `PAUSA` congela la caída pero el tablero sigue visible (no se queda en negro); `REANUDAR` no produce un salto de tiempo: la pieza no baja de golpe varias filas.
+- [X] Pulsar flechas o espacio durante la partida no hace scroll de la página.
+- [X] Que una pieza nueva no quepa al aparecer emite `onGameOver` y abre el modal `FIN DEL JUEGO` de la plataforma con la puntuación real; `GUARDAR PUNTUACIÓN` la escribe en `public.scores` con `game_id = 'caida'`.
+- [X] El juego no dibuja ningún overlay propio de GAME OVER ni de PAUSA, y no escribe nada en `localStorage` (`grep` limpio de `localStorage` en `lib/games/caida.ts`).
+- [X] El botón `FIN` acaba en el mismo modal, con la puntuación acumulada hasta ese momento.
+- [X] Esa puntuación aparece entre las 10 de la barra lateral de `/juego/caida`, en el tab `CAÍDA` del Salón de la Fama y en el tab `GLOBAL`, sin haber tocado `layout.tsx` ni `salon-de-la-fama/client.tsx`.
+- [X] Salir de la pantalla detiene el `requestAnimationFrame` y quita los listeners de `keydown`: volver a entrar no duplica el juego ni acelera la caída, y las teclas no siguen respondiendo fuera de la pantalla de juego.
+- [X] `JUGAR DE NUEVO` empieza una partida nueva con el tablero vacío y 0 puntos.
+- [X] `/juego/rocas/jugar` se juega exactamente igual que antes de este spec.
+- [X] Un id que no está en `games` (por ejemplo `/juego/serpentina`) sigue devolviendo 404.
 
 ## Decisions taken and discarded
 
