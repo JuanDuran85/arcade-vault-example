@@ -64,6 +64,8 @@ Spec-driven development using the `/spec` and `/spec-impl` skills from [Klerith/
 
 For a new game specifically, use the project skill `/add-game` (`.claude/skills/add-game/`) instead of `/spec` directly — it interviews you (port from `references/started-games/` vs. design from scratch, catalog entry, controls) and writes the resulting `specs/NN-<juego>-game.md`, ready for `/spec-impl`.
 
+Antes de eso, para decidir **qué** juego agregar, está el agente `game-planner` (`.claude/agents/game-planner.md`): lee `references/implemented-games.md` y `references/started-games/`, recomienda 1 juego + 2 alternativas (diversidad de categoría → factibilidad en canvas 2D → reconocimiento clásico) y mantiene el TODO acumulativo en `references/game-suggestions-todo.md`. No escribe specs ni código; termina apuntando a `/add-game`.
+
 ## Environment variables
 
 - `RESEND_API_KEY` — clave de Resend usada por `app/api/contact/route.ts`. Sin prefijo `NEXT_PUBLIC_`: nunca llega al cliente. Ver `.env.example`.
