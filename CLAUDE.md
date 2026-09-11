@@ -38,7 +38,7 @@ The catalog and the leaderboard are real Supabase data (SPEC 06). Types live in 
 
 - **Tables** (`supabase/migrations/`) — `public.games` is the catalog and `public.scores` one row per finished game, with `scores.game_id` a FK to `games.id`. The view `public.game_stats` is `games` plus `best`/`plays` aggregated at query time; nothing stores those. RLS: everyone reads both tables, anyone (signed in or not) inserts a score, and **nobody writes `games` from the app** — it is edited by migration only. `scores.user_id` is filled by the column default `auth.uid()` (null for anonymous players) and **is not read anywhere yet**.
 - **`games` holds only games that really exist** — today four rows, `rocas`, `caida`, `bloques` and `snake`. The 7 placeholders of SPEC 01 are gone from the code, so their ids 404. A game exists ⇔ it has a row here ⇔ it has a module in `lib/games/` **and an entry in `lib/games/registry.ts`**; there is no `playable` column and no `id === "rocas"` check any more.
-- `lib/catalog.ts` — `getGames()` / `getGame()` read `game_stats`. Errors **throw** on purpose: there is no fallback to local data, because a stale catalog is worse than a visible error. `getGame` returning `null` means "no such game" and only that, so callers can `notFound()` on it safely.
+- `lib/catalog.ts` — `getGames()` / `getGame()` read `game_stats`. Errors **throw** on purpose: there is no fallback to local data, because a stale catalog is worse than a visible error. `getGame` returning `null` means "no such game" and only that, so callers can `notFound()` on it safely. Both are wrapped in React's `cache()` — `/juego/[id]` calls `getGame()` from both `layout.tsx` and `page.tsx` in the same request, and without it that's two round trips to Supabase for the same row. This only collapses because `lib/supabase/server.ts`'s `createClient()` is _also_ `cache()`-wrapped (one client per request); `getGame()`'s cache keys on argument identity, so both call sites must share that same client object.
 - `lib/scores.ts` — `topScores()` (no `gameId` = global ranking) and `saveScore()`. `topScores` never throws: it logs and returns `[]`, so a broken leaderboard cannot take down the game page. `saveScore` never sends `user_id` (the column default does it) and remembers the player name in `localStorage["av_player_name"]`.
 - `lib/data.ts` — only `CATS` survives; `GAMES`, `PLAYERS` and `seededScores()` are gone.
 - `lib/session.tsx` — `SessionProvider`/`useSession()` over real Supabase Auth (SPEC 04). It no longer knows anything about scores: **saving a score does not consult the session**, and `av_scores` no longer exists.
@@ -52,7 +52,7 @@ The catalog and the leaderboard are real Supabase data (SPEC 06). Types live in 
 
 ### Routes
 
-`app/` — `/` (home), `/biblioteca` (game library/filter by `Category`), `/juego/[id]` (detail + leaderboard, `layout.tsx` renders the shared leaderboard sidebar), `/juego/[id]/jugar` (play screen), `/salon-de-la-fama`, `/acerca-de`, `/iniciar-sesion`, `/api/contact` (Resend email send, see below).
+`app/` — `/` (home), `/biblioteca` (game library/filter by `Category`), `/juego/[id]` (detail + leaderboard, `layout.tsx` renders the shared leaderboard sidebar), `/juego/[id]/jugar` (play screen), `/salon-de-la-fama`, `/acerca-de`, `/iniciar-sesion`, `/api/contact` (Resend email send, see below), you can see `/references/implemented-games.md` when you need to check which games are implemented and how to implement new ones.
 
 ### References
 
@@ -61,6 +61,8 @@ The catalog and the leaderboard are real Supabase data (SPEC 06). Types live in 
 ## Workflow
 
 Spec-driven development using the `/spec` and `/spec-impl` skills from [Klerith/fernando-skills](https://github.com/Klerith/fernando-skills) (`npx skills@latest add Klerith/fernando-skills`). Implemented specs live in `specs/`; check there before assuming a feature is undesigned.
+
+For a new game specifically, use the project skill `/add-game` (`.claude/skills/add-game/`) instead of `/spec` directly — it interviews you (port from `references/started-games/` vs. design from scratch, catalog entry, controls) and writes the resulting `specs/NN-<juego>-game.md`, ready for `/spec-impl`.
 
 ## Environment variables
 
