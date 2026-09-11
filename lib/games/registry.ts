@@ -2,6 +2,7 @@
 import { startAsteroids } from "./asteroids";
 import { startBloques } from "./bloques";
 import { startCaida } from "./caida";
+import { startSnake } from "./snake";
 
 export interface GameState {
   score: number;
@@ -41,5 +42,9 @@ export const GAMES: Record<string, GameEntry> = {
     start: startBloques,
     controls: "← → MOVER PALETA · O MUEVE EL RATÓN",
     sound: true,
+  },
+  snake: {
+    start: startSnake,
+    controls: "↑ ↓ ← → MOVER · WASD TAMBIÉN",
   },
 };

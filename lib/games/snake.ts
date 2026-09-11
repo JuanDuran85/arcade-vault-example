@@ -57,6 +57,13 @@ export function startSnake(
   canvas.height = H;
   const ctx = canvas.getContext("2d")!;
 
+  // Construido aquí, no a nivel de módulo: Image no existe en el servidor y
+  // este archivo acaba en el grafo de un Server Component. Carga async, sin
+  // estado "cargando" nuevo — mientras no está lista, drawFruit() cae al
+  // fillRect verde de siempre.
+  const fruitImg = new Image();
+  fruitImg.src = "/sprites/fruits.png";
+
   // Cabeza en el índice 0, 3 segmentos iniciales, centrada y mirando a la derecha.
   const startX = Math.floor(COLS / 2);
   const startY = Math.floor(ROWS / 2);
@@ -66,10 +73,73 @@ export function startSnake(
     { x: startX - 2, y: startY },
   ];
 
-  const score = 0;
-  const level = 1;
+  let dir: Cell = { x: 1, y: 0 };
+  let nextDir: Cell = dir; // buffer: el giro se aplica en el próximo tick
+  let moveInterval = BASE_INTERVAL;
+  let acc = 0; // acumulador de tiempo para el paso fijo
+
+  let score = 0;
+  let level = 1;
   let finished = false;
+  let paused = false;
+  let lastTime: number | null = null;
   let rafId = 0;
+  let fruit: { x: number; y: number; spriteIndex: number };
+
+  // Celda libre al azar (ninguna casilla de la serpiente); O(COLS*ROWS) por
+  // spawn, un tablero de 40×40 no lo nota.
+  function spawnFruit() {
+    const free: Cell[] = [];
+    for (let x = 0; x < COLS; x++)
+      for (let y = 0; y < ROWS; y++)
+        if (!snake.some((seg) => seg.x === x && seg.y === y))
+          free.push({ x, y });
+    const cell = free[Math.floor(Math.random() * free.length)];
+    fruit = {
+      x: cell.x,
+      y: cell.y,
+      spriteIndex: Math.floor(Math.random() * FRUITS.length),
+    };
+  }
+
+  // ── Movimiento a paso fijo, colisiones y crecimiento ────────────────────────
+  function tick() {
+    dir = nextDir;
+    const head = snake[0];
+    const newHead: Cell = { x: head.x + dir.x, y: head.y + dir.y };
+
+    if (
+      newHead.x < 0 ||
+      newHead.x >= COLS ||
+      newHead.y < 0 ||
+      newHead.y >= ROWS
+    ) {
+      finish();
+      return;
+    }
+
+    const willGrow = newHead.x === fruit.x && newHead.y === fruit.y;
+    // La cola se libera este mismo tick si no se crece, así que no cuenta
+    // como colisión contra uno mismo.
+    const body = willGrow ? snake : snake.slice(0, -1);
+    if (body.some((seg) => seg.x === newHead.x && seg.y === newHead.y)) {
+      finish();
+      return;
+    }
+
+    snake.unshift(newHead);
+    if (willGrow) {
+      score += POINTS_PER_FRUIT;
+      if (score % POINTS_PER_LEVEL === 0) {
+        level++;
+        moveInterval = Math.max(MIN_INTERVAL, BASE_INTERVAL - (level - 1) * 10);
+      }
+      spawnFruit();
+      notify();
+    } else {
+      snake.pop();
+    }
+  }
 
   // ── Fin de partida ──────────────────────────────────────────────────────────
   function finish() {
@@ -115,30 +185,95 @@ export function startSnake(
     });
   }
 
+  function drawFruit() {
+    const px = fruit.x * CELL;
+    const py = fruit.y * CELL;
+    if (fruitImg.complete) {
+      const sprite = FRUITS[fruit.spriteIndex];
+      ctx.drawImage(
+        fruitImg,
+        sprite.x,
+        sprite.y,
+        sprite.w,
+        sprite.h,
+        px,
+        py,
+        CELL,
+        CELL,
+      );
+    } else {
+      // Fallback mientras carga la imagen: dura como mucho un par de frames.
+      ctx.fillStyle = "#2ecc71";
+      ctx.fillRect(px + 1, py + 1, CELL - 2, CELL - 2);
+    }
+  }
+
   function draw() {
     ctx.fillStyle = "#000";
     ctx.fillRect(0, 0, W, H);
     drawGrid();
+    drawFruit();
     drawSnake();
   }
 
+  // ── Teclado ─────────────────────────────────────────────────────────────────
+  // Flechas y WASD escriben el mismo buffer nextDir; ninguno dispara tick()
+  // directamente, así que un giro no puede aplicarse dos veces en el mismo paso.
+  const ARROW_KEYS = ["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"];
+
+  const KEY_DIRS: Record<string, Cell> = {
+    ArrowUp: { x: 0, y: -1 },
+    ArrowDown: { x: 0, y: 1 },
+    ArrowLeft: { x: -1, y: 0 },
+    ArrowRight: { x: 1, y: 0 },
+    KeyW: { x: 0, y: -1 },
+    KeyS: { x: 0, y: 1 },
+    KeyA: { x: -1, y: 0 },
+    KeyD: { x: 1, y: 0 },
+  };
+
+  const onKeyDown = (e: KeyboardEvent) => {
+    if (ARROW_KEYS.includes(e.code)) e.preventDefault();
+    const candidate = KEY_DIRS[e.code];
+    if (!candidate) return;
+    // No te puedes morder invirtiendo sobre ti mismo en el mismo tick: se
+    // compara contra dir (la última dirección aplicada), no contra nextDir.
+    if (candidate.x === -dir.x && candidate.y === -dir.y) return;
+    nextDir = candidate;
+  };
+  window.addEventListener("keydown", onKeyDown);
+
   // ── Loop principal ──────────────────────────────────────────────────────────
-  // El paso fijo (acumulador + tick por moveInterval) llega en el siguiente
-  // paso del plan; por ahora el rAF solo redibuja cada frame.
-  function loop() {
+  // rAF redibuja cada frame para que la pausa no deje el canvas en negro; el
+  // acumulador dispara tick() a paso fijo, independiente del framerate.
+  function loop(ts: number) {
+    const dt = lastTime === null ? 0 : ts - lastTime;
+    lastTime = ts;
+
+    if (!paused) {
+      acc += dt;
+      while (acc >= moveInterval) {
+        tick();
+        acc -= moveInterval;
+      }
+    }
+
     draw();
     rafId = requestAnimationFrame(loop);
   }
 
+  spawnFruit();
   notify();
   rafId = requestAnimationFrame(loop);
 
   return {
     stop() {
       cancelAnimationFrame(rafId);
+      window.removeEventListener("keydown", onKeyDown);
     },
-    setPaused() {
-      // Se cablea en el paso del loop a paso fijo.
+    setPaused(p: boolean) {
+      paused = p;
+      if (!p) lastTime = null; // evita que acc salte el tiempo en pausa
     },
     endGame() {
       finish();

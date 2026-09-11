@@ -1,6 +1,6 @@
 # SPEC 10 — Cuarto juego real: `snake`
 
-> **Status:** Aprobado
+> **Status:** Implementado
 > **Depends on:** SPEC 06, SPEC 07
 > **Date:** 2026-09-11
 > **Objective:** Diseñar y construir Snake desde cero en `lib/games/snake.ts` — sin `game.js` de referencia, con fruta real dibujada desde un sprite propio — registrarlo en el catálogo y en `registry.ts` para que `/juego/snake/jugar` sea una partida real que guarda puntuación.
