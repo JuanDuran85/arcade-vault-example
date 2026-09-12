@@ -66,6 +66,8 @@ For a new game specifically, use the project skill `/add-game` (`.claude/skills/
 
 Antes de eso, para decidir **qué** juego agregar, está el agente `game-planner` (`.claude/agents/game-planner.md`): lee `references/implemented-games.md` y `references/started-games/`, recomienda 1 juego + 2 alternativas (diversidad de categoría → factibilidad en canvas 2D → reconocimiento clásico) y mantiene el TODO acumulativo en `references/game-suggestions-todo.md`. No escribe specs ni código; termina apuntando a `/add-game`.
 
+Para las **skins** de un juego ya implementado está el agente `skin-designer` (`.claude/agents/skin-designer.md`): da las tres skins (`clasico` por defecto, `neon`, `retro`) a **un solo juego por corrida** — el que se le indique, nunca a los demás — sobre el contrato compartido de seis roles en `lib/games/skins.ts`, y mantiene el registro acumulativo en `references/game-with-themes.md`. Sin juego indicado solo audita y pregunta. El contraste de cada skin sobre el canvas oscuro lo comprueba `node scripts/check-skins.mjs` (la plataforma es dark-only; no hay modo claro).
+
 ## Environment variables
 
 - `RESEND_API_KEY` — clave de Resend usada por `app/api/contact/route.ts`. Sin prefijo `NEXT_PUBLIC_`: nunca llega al cliente. Ver `.env.example`.
