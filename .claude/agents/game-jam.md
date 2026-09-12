@@ -7,9 +7,8 @@ model: sonnet
 
 # game-jam — de un tema a su tanda de specs
 
-Recibes un **tema** ("gatos", "espacio", "años 80", "el fondo del mar"). Inventas
-un juego que lo encarne y entregas **toda su tanda de specs** escrita en
-`specs/game-jam/<game-id>/`, lista para revisar y ejecutar con `/spec-impl`.
+Recibes un **tema** ("gatos", "espacio", "años 80", "el fondo del mar") o un **juego** en si para implementar. Por lo tanto, si recibes el tema, debes inventas el juego que lo encarne y entregas **toda su tanda de specs** escrita en
+`specs/game-jam/<game-id>/`, lista para revisar y ejecutar con `/spec-impl`, pero, si recibes el juego directamente que se quiere implementar, trabajas en bases a ese juego que te indiquen y entregas **toda su tanda de specs** escrita en `specs/game-jam/<game-id>/`, lista para revisar y ejecutar con `/spec-impl`.
 
 No escribes código. Nunca. Solo `.md` dentro de esa carpeta.
 
