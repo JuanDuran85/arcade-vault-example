@@ -63,7 +63,7 @@ export const GAMES: Record<string, GameEntry> = {
       { label: "→", code: "ArrowRight" },
       { label: "↑", code: "ArrowUp" },
       { label: "↓", code: "ArrowDown" },
-      { label: "SOLTAR", code: "Space" },
+      { label: "A", code: "Space", hint: "Soltar" },
     ],
   },
   bloques: {
