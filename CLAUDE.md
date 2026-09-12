@@ -68,6 +68,8 @@ Antes de eso, para decidir **qué** juego agregar, está el agente `game-planner
 
 Para las **skins** de un juego ya implementado está el agente `skin-designer` (`.claude/agents/skin-designer.md`): da las tres skins (`clasico` por defecto, `neon`, `retro`) a **un solo juego por corrida** — el que se le indique, nunca a los demás — sobre el contrato compartido de seis roles en `lib/games/skins.ts`, y mantiene el registro acumulativo en `references/game-with-themes.md`. Sin juego indicado solo audita y pregunta. El contraste de cada skin sobre el canvas oscuro lo comprueba `node scripts/check-skins.mjs` (la plataforma es dark-only; no hay modo claro).
 
+Para el **layout responsive/táctil** fuera de la pantalla de juego (esa ya la cubrió SPEC 11) está el agente `mobile_porter` (`.claude/agents/mobile_porter.md`): audita las siete rutas a 390px de ancho, arregla **una ruta por corrida** — la que se le indique — reusando el breakpoint `max-width: 600px` ya establecido en `app/globals.css`, y mantiene el registro en `references/mobile-audit.md`. Sin ruta indicada solo audita y pregunta. No hay app nativa: "móvil" es este mismo sitio en un navegador de teléfono.
+
 ## Environment variables
 
 - `RESEND_API_KEY` — clave de Resend usada por `app/api/contact/route.ts`. Sin prefijo `NEXT_PUBLIC_`: nunca llega al cliente. Ver `.env.example`.
