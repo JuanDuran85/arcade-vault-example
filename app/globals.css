@@ -424,6 +424,15 @@ a {
   border-color: var(--ink-dim);
   box-shadow: none;
 }
+/* <select> nativo (selector de skin): sin el recorte hexagonal, para que la
+   flecha del navegador no quede cortada */
+select.btn {
+  clip-path: none;
+  padding-right: 14px;
+}
+select.btn::before {
+  clip-path: none;
+}
 .btn.lg {
   padding: 16px 28px;
   font-size: 12px;
@@ -1132,6 +1141,109 @@ a {
   font-size: 11px;
   color: var(--ink-dim);
   letter-spacing: 0.16em;
+}
+
+/* gamepad táctil: solo en pantallas de puntero grueso (dedo), nunca con mouse/trackpad */
+.touch-pad {
+  display: none;
+}
+.touch-controls {
+  display: none;
+}
+@media (pointer: coarse) {
+  /* con gamepad en pantalla no hace falta el nav — más espacio para jugar */
+  body:has(.av-player) .av-nav {
+    display: none;
+  }
+  /* sus botones se repiten bajo el gamepad en .touch-controls */
+  .hud-actions {
+    display: none;
+  }
+  .touch-pad {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 28px;
+    margin-top: 32px;
+  }
+  .touch-pad .btn {
+    user-select: none;
+  }
+  .touch-action-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+  }
+  .touch-hint {
+    font-size: 9px;
+    color: var(--ink-faint);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+  .touch-controls {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 10px;
+  }
+  /* cruz de flechas: ubica cada botón por su code, sin importar el orden del array */
+  .touch-dpad {
+    display: grid;
+    grid-template-columns: repeat(3, 48px);
+    grid-template-rows: repeat(3, 48px);
+    gap: 6px;
+  }
+  .touch-dpad .btn {
+    width: 48px;
+    height: 48px;
+    padding: 0;
+  }
+  .touch-dpad .btn[data-code="ArrowUp"] {
+    grid-area: 1 / 2;
+  }
+  .touch-dpad .btn[data-code="ArrowLeft"] {
+    grid-area: 2 / 1;
+  }
+  .touch-dpad .btn[data-code="ArrowRight"] {
+    grid-area: 2 / 3;
+  }
+  .touch-dpad .btn[data-code="ArrowDown"] {
+    grid-area: 3 / 2;
+  }
+  /* botón(es) de acción (disparar/soltar…): círculo destacado, un solo botón para rocas */
+  .touch-actions {
+    display: flex;
+    gap: 12px;
+  }
+  .touch-actions .btn {
+    width: 64px;
+    height: 64px;
+    padding: 0;
+    border-radius: 50%;
+    clip-path: none;
+    border-color: var(--magenta);
+    font-size: 8px;
+  }
+  .touch-actions .btn::before {
+    clip-path: none;
+    border-radius: 50%;
+  }
+}
+
+/* pantalla de juego en móvil: que el canvas (4/3, width:100%) quepa sin scroll horizontal */
+@media (max-width: 600px) {
+  .hud-actions {
+    flex-wrap: wrap;
+  }
+  .av-player {
+    padding: 0 12px 32px;
+  }
+  .crt {
+    padding: 12px;
+  }
 }
 
 /* fake in-screen game */

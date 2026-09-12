@@ -280,6 +280,10 @@ export function startAsteroids(
 
       this.vx *= DRAG;
       this.vy *= DRAG;
+      if (keys["ArrowDown"]) {
+        this.vx *= 0.9; // freno: decelera más rápido que el drag normal
+        this.vy *= 0.9;
+      }
       this.x = wrap(this.x + this.vx * dt, W);
       this.y = wrap(this.y + this.vy * dt, H);
     }
@@ -467,8 +471,10 @@ export function startAsteroids(
       return;
     }
 
-    // Disparar
-    if (pressed("Space")) {
+    // Disparar: nivel-disparado (no flanco) — mantener presionado dispara sin
+    // parar, tocar y soltar dispara una vez; tryShoot() ya limita el ritmo
+    // con shootCooldown.
+    if (keys["Space"]) {
       bullets.push(...ship.tryShoot());
     }
 
