@@ -2,11 +2,18 @@
 
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useSession } from "@/lib/session";
 import { saveScore } from "@/lib/scores";
 import { createClient } from "@/lib/supabase/client";
 import type { Game } from "@/lib/types";
-import { GAMES, type GameHandle, type GameState } from "@/lib/games/registry";
+import {
+  GAMES,
+  type GameHandle,
+  type GameState,
+  type TouchButton,
+} from "@/lib/games/registry";
+import { SKINS, type Skin, type SkinId } from "@/lib/games/skins";
 
 // Todos los juegos arrancan sin puntos; el juego notifica sus vidas reales en
 // el primer notify(), síncrono dentro de start().
@@ -16,6 +23,7 @@ function GameCanvas({
   start,
   paused,
   muted,
+  skinId,
   onState,
   onGameOver,
   handleRef,
@@ -23,18 +31,22 @@ function GameCanvas({
   start: (typeof GAMES)[string]["start"];
   paused: boolean;
   muted: boolean;
+  skinId: SkinId;
   onState: (s: GameState) => void;
   onGameOver: (finalScore: number) => void;
   handleRef: React.RefObject<GameHandle | null>;
 }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  // El juego guarda esta misma referencia; cambiar de skin muta sus campos
+  // en vez de reemplazar el objeto, así el juego en curso no se reinicia.
+  const skinRef = useRef<Skin>({ ...SKINS[skinId] });
 
   // Los callbacks llegan memoizados del padre: el juego no se reinicia en
   // cada render. `paused` va en su propio efecto por lo mismo.
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-    const handle = start(canvas, { onState, onGameOver });
+    const handle = start(canvas, { onState, onGameOver }, skinRef.current);
     handleRef.current = handle;
     return () => {
       handle.stop();
@@ -51,8 +63,81 @@ function GameCanvas({
     handleRef.current?.setMuted?.(muted);
   }, [muted, handleRef]);
 
+  // ponytail: mutación in-place para no reiniciar la partida; setSkin() en
+  // GameHandle si algún juego necesita reaccionar al cambio
+  useEffect(() => {
+    Object.assign(skinRef.current, SKINS[skinId]);
+  }, [skinId]);
+
   return <canvas ref={canvasRef} className="game-canvas" />;
 }
+
+// Space es la única tecla cuyo `key` no coincide con su `code`.
+function keyFromCode(code: string): string {
+  return code === "Space" ? " " : code;
+}
+
+// Botones táctiles: despachan KeyboardEvent sintéticos a `window`, donde los
+// cuatro juegos ya escuchan keydown/keyup. Mantener pulsado = tecla mantenida,
+// así que el disparo continuo mientras se mantiene presionado ya sale gratis
+// del lado del juego (asteroids.ts lee `keys["Space"]`, no un flanco).
+function TouchPad({ buttons }: { buttons: TouchButton[] }) {
+  const send = (type: "keydown" | "keyup", code: string) => {
+    window.dispatchEvent(
+      new KeyboardEvent(type, { key: keyFromCode(code), code }),
+    );
+  };
+
+  const renderBtn = (b: TouchButton) => (
+    <button
+      key={b.hint ? undefined : b.code}
+      type="button"
+      className="btn"
+      data-code={b.code}
+      onPointerDown={() => send("keydown", b.code)}
+      onPointerUp={() => send("keyup", b.code)}
+      onPointerCancel={() => send("keyup", b.code)}
+      onPointerLeave={() => send("keyup", b.code)}
+    >
+      {b.label}
+    </button>
+  );
+
+  // El botón de acción puede traer un `hint` (ej. "Disparar" sobre el botón
+  // "A"); solo él se envuelve para no romper el grid-area del d-pad.
+  const renderAction = (b: TouchButton) =>
+    b.hint ? (
+      <div key={b.code} className="touch-action-wrap">
+        <span className="touch-hint">{b.hint}</span>
+        {renderBtn(b)}
+      </div>
+    ) : (
+      renderBtn(b)
+    );
+
+  // Flechas en cruz (d-pad) + el resto (disparar/soltar…) como botón de
+  // acción aparte, mismo componente para los cuatro juegos.
+  const dpad = buttons.filter((b) => b.code.startsWith("Arrow"));
+  const actions = buttons.filter((b) => !b.code.startsWith("Arrow"));
+
+  return (
+    <div className="touch-pad">
+      {dpad.length > 0 && (
+        <div className="touch-dpad">{dpad.map(renderBtn)}</div>
+      )}
+      {actions.length > 0 && (
+        <div className="touch-actions">{actions.map(renderAction)}</div>
+      )}
+    </div>
+  );
+}
+
+const SKIN_ORDER: SkinId[] = ["clasico", "neon", "retro"];
+const SKIN_LABELS: Record<SkinId, string> = {
+  clasico: "CLÁSICO",
+  neon: "NEÓN",
+  retro: "RETRO",
+};
 
 export default function GamePlayerClient({
   game,
@@ -62,13 +147,21 @@ export default function GamePlayerClient({
   id: string;
 }) {
   const entry = GAMES[id];
+  const router = useRouter();
   const handleRef = useRef<GameHandle | null>(null);
   const [runId, setRunId] = useState(0);
   const { user } = useSession();
   const [state, setState] = useState<GameState>(INITIAL_STATE);
   const [paused, setPaused] = useState(false);
   const [muted, setMuted] = useState(
-    () => typeof window !== "undefined" && localStorage.getItem("av_muted") === "1",
+    () =>
+      typeof window !== "undefined" && localStorage.getItem("av_muted") === "1",
+  );
+  const [skinId, setSkinId] = useState<SkinId>(
+    () =>
+      (typeof window !== "undefined" &&
+        (localStorage.getItem("av_skin") as SkinId | null)) ||
+      "clasico",
   );
   const [over, setOver] = useState(false);
   const [name, setName] = useState("");
@@ -102,6 +195,11 @@ export default function GamePlayerClient({
       return next;
     });
 
+  const selectSkin = (next: SkinId) => {
+    setSkinId(next);
+    localStorage.setItem("av_skin", next);
+  };
+
   const onGameState = useCallback((s: GameState) => setState(s), []);
 
   const onGameOver = useCallback(
@@ -126,6 +224,50 @@ export default function GamePlayerClient({
     setError(null);
     setRunId((r) => r + 1); // remonta el canvas → partida nueva
   };
+
+  // Botones compartidos entre la barra superior (mouse) y la barra bajo el
+  // gamepad (dedo, @media pointer:coarse) — mismo elemento en dos posiciones,
+  // sin duplicar el JSX de cada uno.
+  const pauseBtn = (
+    <button className="btn yellow" onClick={togglePause}>
+      {paused ? "REANUDAR" : "PAUSA"}
+    </button>
+  );
+  const soundBtn = entry.sound && (
+    <button
+      className="btn"
+      onClick={toggleMuted}
+      aria-pressed={muted}
+      suppressHydrationWarning
+    >
+      {muted ? "SONIDO" : "SILENCIO"}
+    </button>
+  );
+  const skinSelect = entry.skins && (
+    <select
+      className="btn"
+      value={skinId}
+      onChange={(e) => selectSkin(e.target.value as SkinId)}
+      aria-label="Skin"
+      suppressHydrationWarning
+    >
+      {SKIN_ORDER.map((s) => (
+        <option key={s} value={s}>
+          {SKIN_LABELS[s]}
+        </option>
+      ))}
+    </select>
+  );
+  const finBtn = (
+    <button className="btn magenta" onClick={endGame}>
+      FIN
+    </button>
+  );
+  const salirLink = (
+    <Link href={`/juego/${id}`} className="btn ghost">
+      SALIR
+    </Link>
+  );
 
   const handleSave = async () => {
     setSaving(true);
@@ -174,28 +316,11 @@ export default function GamePlayerClient({
           )}
         </div>
         <div className="hud-actions">
-          <button className="btn yellow" onClick={togglePause}>
-            {paused ? "REANUDAR" : "PAUSA"}
-          </button>
-          {entry.sound && (
-            <button
-              className="btn"
-              onClick={toggleMuted}
-              aria-pressed={muted}
-              // El servidor no tiene localStorage y siempre pinta SILENCIO; si
-              // el jugador lo tenía silenciado, el cliente pinta SONIDO. Es la
-              // única diferencia y es intencional.
-              suppressHydrationWarning
-            >
-              {muted ? "SONIDO" : "SILENCIO"}
-            </button>
-          )}
-          <button className="btn magenta" onClick={endGame}>
-            FIN
-          </button>
-          <Link href={`/juego/${id}`} className="btn ghost">
-            SALIR
-          </Link>
+          {pauseBtn}
+          {soundBtn}
+          {skinSelect}
+          {finBtn}
+          {salirLink}
         </div>
       </div>
 
@@ -206,6 +331,7 @@ export default function GamePlayerClient({
             start={entry.start}
             paused={paused}
             muted={muted}
+            skinId={skinId}
             onState={onGameState}
             onGameOver={onGameOver}
             handleRef={handleRef}
@@ -240,6 +366,22 @@ export default function GamePlayerClient({
           <span>CARGA · 1MB</span>
         </div>
         <div className="game-controls mono">{entry.controls}</div>
+      </div>
+
+      <TouchPad buttons={entry.touch} />
+
+      {/* Misma barra que .hud-actions + REGRESAR; solo visible bajo el
+          gamepad con @media (pointer: coarse), que a su vez oculta la de
+          arriba — así el dedo nunca ve las dos. */}
+      <div className="touch-controls mono">
+        {pauseBtn}
+        {soundBtn}
+        {skinSelect}
+        <button className="btn ghost" onClick={() => router.back()}>
+          REGRESAR
+        </button>
+        {finBtn}
+        {salirLink}
       </div>
 
       {over && (

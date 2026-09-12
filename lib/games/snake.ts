@@ -4,6 +4,25 @@
 // los botones y el ranking los pone la plataforma.
 
 import type { GameCallbacks, GameHandle, GameState } from "./registry";
+import { SKINS, type Skin } from "./skins";
+
+// skin.accent con opacidad, para distinguir la cola de la cabeza sin un rol
+// nuevo (mismo truco que withAlpha en bloques.ts).
+function withAlpha(hex: string, alpha: number): string {
+  const h = hex.replace("#", "");
+  const full =
+    h.length === 3
+      ? h
+          .split("")
+          .map((c) => c + c)
+          .join("")
+      : h;
+  const n = parseInt(full, 16);
+  const r = (n >> 16) & 255;
+  const g = (n >> 8) & 255;
+  const b = n & 255;
+  return `rgba(${r},${g},${b},${alpha.toFixed(2)})`;
+}
 
 const CELL = 20;
 const COLS = 40; // 800 / 20
@@ -52,6 +71,7 @@ interface Cell {
 export function startSnake(
   canvas: HTMLCanvasElement,
   { onState, onGameOver }: GameCallbacks,
+  skin: Skin = SKINS.clasico,
 ): GameHandle {
   canvas.width = W;
   canvas.height = H;
@@ -162,7 +182,7 @@ export function startSnake(
 
   // ── Dibujo ──────────────────────────────────────────────────────────────────
   function drawGrid() {
-    ctx.strokeStyle = "rgba(255,255,255,0.06)";
+    ctx.strokeStyle = skin.grid;
     ctx.lineWidth = 0.5;
     for (let c = 1; c < COLS; c++) {
       ctx.beginPath();
@@ -180,7 +200,7 @@ export function startSnake(
 
   function drawSnake() {
     snake.forEach((seg, i) => {
-      ctx.fillStyle = i === 0 ? "#00ff88" : "#00c46a";
+      ctx.fillStyle = i === 0 ? skin.accent : withAlpha(skin.accent, 0.65);
       ctx.fillRect(seg.x * CELL + 1, seg.y * CELL + 1, CELL - 2, CELL - 2);
     });
   }
@@ -203,13 +223,13 @@ export function startSnake(
       );
     } else {
       // Fallback mientras carga la imagen: dura como mucho un par de frames.
-      ctx.fillStyle = "#2ecc71";
+      ctx.fillStyle = skin.accent2;
       ctx.fillRect(px + 1, py + 1, CELL - 2, CELL - 2);
     }
   }
 
   function draw() {
-    ctx.fillStyle = "#000";
+    ctx.fillStyle = skin.bg;
     ctx.fillRect(0, 0, W, H);
     drawGrid();
     drawFruit();

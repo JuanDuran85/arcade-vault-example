@@ -2,7 +2,7 @@
 name: game-planner
 description: Propone el próximo juego para Arcade Vault y mantiene el TODO de sugerencias en references/game-suggestions-todo.md. Triggers - "qué juego agregamos", "ideas de juegos", "siguiente juego", "game-planner".
 tools: Read, Glob, Bash, Edit, Write
-model: opus
+model: sonnet
 ---
 
 # game-planner — qué juego sigue
