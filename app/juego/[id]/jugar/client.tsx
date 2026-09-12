@@ -81,6 +81,14 @@ function keyFromCode(code: string): string {
 // cuatro juegos ya escuchan keydown/keyup. Mantener pulsado = tecla mantenida,
 // así que el disparo continuo mientras se mantiene presionado ya sale gratis
 // del lado del juego (asteroids.ts lee `keys["Space"]`, no un flanco).
+// Flechas SVG de references/gamepad-assets/gamepad.html, por code.
+const ARROWS: Record<string, { cls: string; path: string }> = {
+  ArrowUp: { cls: "up", path: "M12 4 L20 16 L4 16 Z" },
+  ArrowRight: { cls: "right", path: "M8 4 L20 12 L8 20 Z" },
+  ArrowDown: { cls: "down", path: "M4 8 L20 8 L12 20 Z" },
+  ArrowLeft: { cls: "left", path: "M16 4 L16 20 L4 12 Z" },
+};
+
 function TouchPad({ buttons }: { buttons: TouchButton[] }) {
   const send = (type: "keydown" | "keyup", code: string) => {
     window.dispatchEvent(
@@ -88,45 +96,68 @@ function TouchPad({ buttons }: { buttons: TouchButton[] }) {
     );
   };
 
-  const renderBtn = (b: TouchButton) => (
-    <button
-      key={b.hint ? undefined : b.code}
-      type="button"
-      className="btn"
-      data-code={b.code}
-      onPointerDown={() => send("keydown", b.code)}
-      onPointerUp={() => send("keyup", b.code)}
-      onPointerCancel={() => send("keyup", b.code)}
-      onPointerLeave={() => send("keyup", b.code)}
-    >
-      {b.label}
-    </button>
+  const handlers = (code: string) => ({
+    onPointerDown: () => send("keydown", code),
+    onPointerUp: () => send("keyup", code),
+    onPointerCancel: () => send("keyup", code),
+    onPointerLeave: () => send("keyup", code),
+  });
+
+  const renderArrow = (b: TouchButton) => {
+    const dir = ARROWS[b.code];
+    return (
+      <button
+        key={b.code}
+        type="button"
+        className={`dp dp-${dir.cls}`}
+        aria-label={b.label}
+        data-code={b.code}
+        {...handlers(b.code)}
+      >
+        <svg className="dp-arrow" viewBox="0 0 24 24" aria-hidden>
+          <path d={dir.path} fill="currentColor" />
+        </svg>
+      </button>
+    );
+  };
+
+  // El botón de acción (A) lleva su `hint` encima: "Disparar", "Soltar"…
+  const renderAction = (b: TouchButton) => (
+    <div key={b.code} className="touch-action-wrap">
+      {b.hint && <span className="touch-hint">{b.hint}</span>}
+      <button
+        type="button"
+        className="ab a"
+        aria-label={b.hint ?? b.label}
+        data-code={b.code}
+        {...handlers(b.code)}
+      >
+        <span className="ab-ring" />
+        <span className="ab-letter">{b.label}</span>
+      </button>
+    </div>
   );
 
-  // El botón de acción puede traer un `hint` (ej. "Disparar" sobre el botón
-  // "A"); solo él se envuelve para no romper el grid-area del d-pad.
-  const renderAction = (b: TouchButton) =>
-    b.hint ? (
-      <div key={b.code} className="touch-action-wrap">
-        <span className="touch-hint">{b.hint}</span>
-        {renderBtn(b)}
-      </div>
-    ) : (
-      renderBtn(b)
-    );
-
-  // Flechas en cruz (d-pad) + el resto (disparar/soltar…) como botón de
-  // acción aparte, mismo componente para los cuatro juegos.
-  const dpad = buttons.filter((b) => b.code.startsWith("Arrow"));
-  const actions = buttons.filter((b) => !b.code.startsWith("Arrow"));
+  // Cruz con hub solo si el juego declara las cuatro flechas; si no (bloques),
+  // las flechas van en fila con el mismo estilo .dp.
+  const dpad = buttons.filter((b) => b.code in ARROWS);
+  const actions = buttons.filter((b) => !(b.code in ARROWS));
+  const cross = dpad.length === 4;
 
   return (
-    <div className="touch-pad">
+    <div className="touch-pad gp">
       {dpad.length > 0 && (
-        <div className="touch-dpad">{dpad.map(renderBtn)}</div>
+        <div className={cross ? "gp-dpad" : "gp-dpad gp-dpad-row"}>
+          {dpad.map(renderArrow)}
+          {cross && (
+            <div className="dp-hub" aria-hidden>
+              <span className="dp-hub-gem" />
+            </div>
+          )}
+        </div>
       )}
       {actions.length > 0 && (
-        <div className="touch-actions">{actions.map(renderAction)}</div>
+        <div className="gp-actions">{actions.map(renderAction)}</div>
       )}
     </div>
   );

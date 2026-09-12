@@ -1159,26 +1159,60 @@ select.btn::before {
   .hud-actions {
     display: none;
   }
-  .touch-pad {
+  /* carcasa MK-II (references/gamepad-assets/gamepad.html) */
+  .touch-pad.gp {
+    position: relative;
     display: flex;
     align-items: center;
     justify-content: center;
     flex-wrap: wrap;
     gap: 28px;
-    margin-top: 32px;
+    max-width: 100%;
+    margin: 24px auto 0;
+    padding: 24px 22px 20px;
+    background: linear-gradient(180deg, #1c1c28 0%, #0c0c14 100%);
+    border: 1px solid var(--line);
+    border-radius: 22px;
+    box-shadow:
+      0 30px 80px -30px rgba(0, 245, 255, 0.4),
+      0 0 0 1px rgba(255, 255, 255, 0.02),
+      inset 0 1px 0 rgba(255, 255, 255, 0.06),
+      inset 0 -2px 0 rgba(0, 0, 0, 0.6);
   }
-  .touch-pad .btn {
-    user-select: none;
+  .gp::before {
+    content: "";
+    position: absolute;
+    inset: 4px;
+    border: 1px solid rgba(0, 245, 255, 0.14);
+    border-radius: 18px;
+    pointer-events: none;
+  }
+  .gp::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background-image: radial-gradient(
+      rgba(255, 255, 255, 0.03) 1px,
+      transparent 1px
+    );
+    background-size: 8px 8px;
+    border-radius: inherit;
+    pointer-events: none;
+    opacity: 0.6;
+  }
+  .gp > * {
+    position: relative;
+    z-index: 1;
   }
   .touch-action-wrap {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 4px;
+    gap: 14px;
   }
   .touch-hint {
     font-size: 9px;
-    color: var(--ink-faint);
+    color: var(--ink-dim);
     letter-spacing: 0.12em;
     text-transform: uppercase;
   }
@@ -1189,47 +1223,187 @@ select.btn::before {
     gap: 10px;
     margin-top: 10px;
   }
-  /* cruz de flechas: ubica cada botón por su code, sin importar el orden del array */
-  .touch-dpad {
-    display: grid;
-    grid-template-columns: repeat(3, 48px);
-    grid-template-rows: repeat(3, 48px);
-    gap: 6px;
+  /* D-pad en cruz */
+  .gp-dpad {
+    position: relative;
+    width: 156px;
+    height: 156px;
   }
-  .touch-dpad .btn {
-    width: 48px;
-    height: 48px;
+  .dp,
+  .ab {
+    touch-action: manipulation;
+    user-select: none;
+    -webkit-user-select: none;
     padding: 0;
+    cursor: pointer;
   }
-  .touch-dpad .btn[data-code="ArrowUp"] {
-    grid-area: 1 / 2;
-  }
-  .touch-dpad .btn[data-code="ArrowLeft"] {
-    grid-area: 2 / 1;
-  }
-  .touch-dpad .btn[data-code="ArrowRight"] {
-    grid-area: 2 / 3;
-  }
-  .touch-dpad .btn[data-code="ArrowDown"] {
-    grid-area: 3 / 2;
-  }
-  /* botón(es) de acción (disparar/soltar…): círculo destacado, un solo botón para rocas */
-  .touch-actions {
+  .dp {
+    position: absolute;
+    width: 50px;
+    height: 50px;
+    background: linear-gradient(180deg, #1a1a25, #0a0a12);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 10px;
+    color: var(--ink-dim);
     display: flex;
-    gap: 12px;
+    align-items: center;
+    justify-content: center;
+    box-shadow:
+      0 4px 0 #050507,
+      inset 0 1px 0 rgba(255, 255, 255, 0.06),
+      inset 0 -2px 4px rgba(0, 0, 0, 0.6);
+    transition:
+      transform 80ms,
+      box-shadow 140ms,
+      color 140ms,
+      border-color 140ms,
+      background 140ms;
   }
-  .touch-actions .btn {
-    width: 64px;
-    height: 64px;
-    padding: 0;
-    border-radius: 50%;
-    clip-path: none;
-    border-color: var(--magenta);
-    font-size: 8px;
+  .dp .dp-arrow {
+    width: 22px;
+    height: 22px;
+    transition: filter 140ms;
   }
-  .touch-actions .btn::before {
-    clip-path: none;
+  .dp:active {
+    transform: translateY(3px);
+    color: var(--cyan);
+    background: linear-gradient(180deg, #08161e, #030a0e);
+    border-color: var(--cyan);
+    box-shadow:
+      0 1px 0 #050507,
+      inset 0 0 16px rgba(0, 245, 255, 0.45),
+      0 0 16px rgba(0, 245, 255, 0.5);
+  }
+  .dp:active .dp-arrow {
+    filter: drop-shadow(0 0 6px var(--cyan)) drop-shadow(0 0 12px var(--cyan));
+  }
+  .dp-up {
+    top: 0;
+    left: 53px;
+  }
+  .dp-down {
+    bottom: 0;
+    left: 53px;
+  }
+  .dp-left {
+    left: 0;
+    top: 53px;
+  }
+  .dp-right {
+    right: 0;
+    top: 53px;
+  }
+  /* bloques: solo ← →, en fila y sin hub */
+  .gp-dpad.gp-dpad-row {
+    width: auto;
+    height: auto;
+    display: flex;
+    gap: 16px;
+  }
+  .gp-dpad-row .dp {
+    position: static;
+  }
+  .dp-hub {
+    position: absolute;
+    top: 53px;
+    left: 53px;
+    width: 50px;
+    height: 50px;
+    background: radial-gradient(circle at 50% 50%, #181822 0%, #08080d 80%);
+    border: 1px solid rgba(0, 245, 255, 0.15);
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow:
+      inset 0 0 12px rgba(0, 0, 0, 0.8),
+      inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  }
+  .dp-hub-gem {
+    width: 12px;
+    height: 12px;
+    background: var(--cyan);
+    box-shadow:
+      0 0 10px var(--cyan),
+      inset 0 0 4px rgba(0, 0, 0, 0.5);
+    clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%);
+    animation: pulse-led 2s ease-in-out infinite;
+  }
+  /* botón de acción A */
+  .gp-actions {
+    display: flex;
+    gap: 22px;
+    align-items: center;
+  }
+  .ab {
+    position: relative;
+    width: 74px;
+    height: 74px;
     border-radius: 50%;
+    border: 2px solid currentColor;
+    background:
+      radial-gradient(
+        circle at 32% 26%,
+        rgba(255, 255, 255, 0.25),
+        transparent 50%
+      ),
+      radial-gradient(circle at 50% 55%, var(--ab-mid), var(--ab-deep) 75%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow:
+      0 6px 0 #050507,
+      0 0 22px var(--ab-glow),
+      inset 0 1px 0 rgba(255, 255, 255, 0.18),
+      inset 0 -4px 8px rgba(0, 0, 0, 0.4);
+    transition:
+      transform 80ms,
+      box-shadow 140ms;
+  }
+  .ab.a {
+    color: var(--magenta);
+    --ab-mid: rgba(255, 0, 110, 0.7);
+    --ab-deep: rgba(110, 0, 40, 0.95);
+    --ab-glow: rgba(255, 0, 110, 0.4);
+  }
+  .ab .ab-letter {
+    font-family: var(--pixel);
+    font-size: 22px;
+    color: #fff;
+    letter-spacing: 0.02em;
+    text-shadow:
+      0 0 8px var(--magenta),
+      0 0 18px var(--magenta),
+      0 1px 0 rgba(0, 0, 0, 0.6);
+    position: relative;
+    z-index: 2;
+  }
+  .ab .ab-ring {
+    position: absolute;
+    inset: -8px;
+    border-radius: 50%;
+    border: 1px dashed currentColor;
+    opacity: 0;
+    transition:
+      opacity 140ms,
+      transform 200ms;
+  }
+  .ab:active {
+    transform: translateY(4px) scale(0.97);
+    box-shadow:
+      0 1px 0 #050507,
+      0 0 36px var(--ab-glow),
+      inset 0 0 18px rgba(0, 0, 0, 0.5);
+  }
+  .ab:active .ab-ring {
+    opacity: 1;
+    transform: scale(1.08);
+  }
+}
+@keyframes pulse-led {
+  50% {
+    opacity: 0.35;
+    transform: scale(0.85);
   }
 }
 
@@ -1243,6 +1417,39 @@ select.btn::before {
   }
   .crt {
     padding: 12px;
+  }
+  /* gamepad MK-II: tamaños móviles de la referencia */
+  .touch-pad.gp {
+    gap: 20px;
+    padding: 20px 14px 16px;
+    border-radius: 16px;
+  }
+  .gp-dpad {
+    width: 144px;
+    height: 144px;
+  }
+  .dp {
+    width: 46px;
+    height: 46px;
+    border-radius: 8px;
+  }
+  .dp-up,
+  .dp-down {
+    left: 49px;
+  }
+  .dp-left,
+  .dp-right {
+    top: 49px;
+  }
+  .dp-hub {
+    top: 49px;
+    left: 49px;
+    width: 46px;
+    height: 46px;
+  }
+  .ab {
+    width: 64px;
+    height: 64px;
   }
 }
 
