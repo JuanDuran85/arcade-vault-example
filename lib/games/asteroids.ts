@@ -2,6 +2,7 @@
 // Everything lives inside startAsteroids() so two mounts never share state.
 
 import type { GameCallbacks, GameHandle, GameState } from "./registry";
+import { SKINS, type Skin } from "./skins";
 
 interface Point {
   x: number;
@@ -16,6 +17,24 @@ const wrap = (v: number, max: number) => ((v % max) + max) % max;
 const dist = (a: Point, b: Point) => Math.hypot(a.x - b.x, a.y - b.y);
 const rand = (min: number, max: number) => min + Math.random() * (max - min);
 const randInt = (min: number, max: number) => Math.floor(rand(min, max + 1));
+
+// skin.ink con opacidad, para la estela de partículas y el subtítulo del
+// overlay — únicos dos usos que necesitaban blanco semitransparente.
+function withAlpha(hex: string, alpha: number): string {
+  const h = hex.replace("#", "");
+  const full =
+    h.length === 3
+      ? h
+          .split("")
+          .map((c) => c + c)
+          .join("")
+      : h;
+  const n = parseInt(full, 16);
+  const r = (n >> 16) & 255;
+  const g = (n >> 8) & 255;
+  const b = n & 255;
+  return `rgba(${r},${g},${b},${alpha.toFixed(2)})`;
+}
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 const POWERUP_DROP_CHANCE = 0.15;
@@ -32,6 +51,7 @@ const GAME_KEYS = ["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown", "Space"];
 export function startAsteroids(
   canvas: HTMLCanvasElement,
   { onState, onGameOver }: GameCallbacks,
+  skin: Skin = SKINS.clasico,
 ): GameHandle {
   canvas.width = W;
   canvas.height = H;
@@ -85,7 +105,7 @@ export function startAsteroids(
     }
 
     draw() {
-      ctx.fillStyle = "#fff";
+      ctx.fillStyle = skin.ink;
       ctx.beginPath();
       ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
       ctx.fill();
@@ -145,15 +165,24 @@ export function startAsteroids(
       ctx.save();
       ctx.translate(this.x, this.y);
       ctx.rotate(this.rot);
-      ctx.strokeStyle = "#fff";
-      ctx.lineWidth = 1.5;
+      ctx.strokeStyle = skin.ink;
+      ctx.lineWidth = skin.glow ? 2.5 : 1.5;
       ctx.lineJoin = "round";
+      ctx.shadowBlur = skin.glow ?? 0;
+      ctx.shadowColor = skin.ink;
       ctx.beginPath();
       ctx.moveTo(this.verts[0][0], this.verts[0][1]);
       for (let i = 1; i < this.verts.length; i++)
         ctx.lineTo(this.verts[i][0], this.verts[i][1]);
       ctx.closePath();
       ctx.stroke();
+      if (skin.glow) {
+        // Segunda pasada: núcleo blanco fino sobre el halo, como un tubo de neón.
+        ctx.stroke();
+        ctx.strokeStyle = "#fff";
+        ctx.lineWidth = 1;
+        ctx.stroke();
+      }
       ctx.restore();
     }
   }
@@ -190,12 +219,12 @@ export function startAsteroids(
       ctx.save();
       ctx.translate(this.x, this.y);
       ctx.rotate(Math.PI / 4);
-      ctx.strokeStyle = "#0ff";
+      ctx.strokeStyle = skin.accent;
       ctx.lineWidth = 2;
       const r = this.radius * pulse;
       ctx.strokeRect(-r, -r, r * 2, r * 2);
       ctx.restore();
-      ctx.fillStyle = "#0ff";
+      ctx.fillStyle = skin.accent;
       ctx.font = "bold 12px monospace";
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
@@ -251,6 +280,10 @@ export function startAsteroids(
 
       this.vx *= DRAG;
       this.vy *= DRAG;
+      if (keys["ArrowDown"]) {
+        this.vx *= 0.9; // freno: decelera más rápido que el drag normal
+        this.vy *= 0.9;
+      }
       this.x = wrap(this.x + this.vx * dt, W);
       this.y = wrap(this.y + this.vy * dt, H);
     }
@@ -280,9 +313,11 @@ export function startAsteroids(
       ctx.save();
       ctx.translate(this.x, this.y);
       ctx.rotate(this.angle);
-      ctx.strokeStyle = "#fff";
-      ctx.lineWidth = 1.5;
+      ctx.strokeStyle = skin.glow ? skin.accent : skin.ink;
+      ctx.lineWidth = skin.glow ? 2.5 : 1.5;
       ctx.lineJoin = "round";
+      ctx.shadowBlur = skin.glow ?? 0;
+      ctx.shadowColor = skin.accent;
 
       // Silueta clásica: triángulo con muesca trasera
       ctx.beginPath();
@@ -299,7 +334,7 @@ export function startAsteroids(
         ctx.moveTo(-8, -4);
         ctx.lineTo(-8 - rand(6, 14), 0);
         ctx.lineTo(-8, 4);
-        ctx.strokeStyle = "rgba(255, 130, 0, 0.85)";
+        ctx.strokeStyle = skin.warn;
         ctx.stroke();
       }
 
@@ -337,7 +372,7 @@ export function startAsteroids(
 
     draw() {
       const alpha = this.ttl / this.life;
-      ctx.strokeStyle = `rgba(255,255,255,${alpha.toFixed(2)})`;
+      ctx.strokeStyle = withAlpha(skin.ink, alpha);
       ctx.lineWidth = 1;
       ctx.beginPath();
       ctx.moveTo(this.x, this.y);
@@ -436,8 +471,10 @@ export function startAsteroids(
       return;
     }
 
-    // Disparar
-    if (pressed("Space")) {
+    // Disparar: nivel-disparado (no flanco) — mantener presionado dispara sin
+    // parar, tocar y soltar dispara una vez; tryShoot() ya limita el ritmo
+    // con shootCooldown.
+    if (keys["Space"]) {
       bullets.push(...ship.tryShoot());
     }
 
@@ -501,7 +538,7 @@ export function startAsteroids(
     ctx.save();
     ctx.translate(x, y);
     ctx.rotate(-Math.PI / 2);
-    ctx.strokeStyle = "#fff";
+    ctx.strokeStyle = skin.ink;
     ctx.lineWidth = 1.2;
     ctx.lineJoin = "round";
     ctx.beginPath();
@@ -515,7 +552,7 @@ export function startAsteroids(
   }
 
   function drawHUD() {
-    ctx.fillStyle = "#fff";
+    ctx.fillStyle = skin.ink;
     ctx.font = "15px monospace";
 
     ctx.textAlign = "left";
@@ -528,23 +565,23 @@ export function startAsteroids(
 
     if (ship.tripleShot > 0) {
       ctx.textAlign = "left";
-      ctx.fillStyle = "#0ff";
+      ctx.fillStyle = skin.accent;
       ctx.fillText(`3x  ${ship.tripleShot.toFixed(1)}s`, 14, 46);
     }
   }
 
   function drawOverlay(title: string, sub: string) {
     ctx.textAlign = "center";
-    ctx.fillStyle = "#fff";
+    ctx.fillStyle = skin.ink;
     ctx.font = "bold 46px monospace";
     ctx.fillText(title, W / 2, H / 2 - 18);
     ctx.font = "18px monospace";
-    ctx.fillStyle = "rgba(255,255,255,0.65)";
+    ctx.fillStyle = withAlpha(skin.ink, 0.65);
     ctx.fillText(sub, W / 2, H / 2 + 22);
   }
 
   function draw() {
-    ctx.fillStyle = "#000";
+    ctx.fillStyle = skin.bg;
     ctx.fillRect(0, 0, W, H);
 
     particles.forEach((p) => p.draw());

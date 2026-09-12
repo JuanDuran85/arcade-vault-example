@@ -7,6 +7,7 @@
 // overlay, los botones y el ranking los pone la plataforma.
 
 import type { GameCallbacks, GameHandle, GameState } from "./registry";
+import { SKINS, type Skin } from "./skins";
 
 const W = 800; // mismo buffer que rocas y caida: .game-canvas es 4/3
 const H = 600;
@@ -24,19 +25,29 @@ const EXPLOSION_DURATION = 150; // ms, de assets/spritesheet.js del original
 
 const GAME_KEYS = ["ArrowLeft", "ArrowRight"];
 
-// Los cuatro primeros son los del CRT (app/globals.css); los tres restantes
-// completan los nombres que usan los niveles del original.
-const COLORS: Record<string, string> = {
-  cyan: "#00f5ff",
-  magenta: "#ff006e",
-  yellow: "#f5ff00",
-  green: "#00ff88",
-  red: "#ff2a2a",
-  hotpink: "#ff5fc8",
-  gray: "#9e9e9e",
-};
+// Los nombres de color de LEVELS (línea ~71) son datos de diseño de nivel, no
+// colores en sí: se resuelven contra la skin activa en blockColor(), dentro de
+// startBloques(). 7 nombres no caben en los 6 roles, así que se reparten por
+// parecido (frío → accent, magenta → accent2, cálido → warn, neutro → ink);
+// ver la nota en references/game-with-themes.md.
 
-const hex = (name: string) => COLORS[name] ?? "#fff";
+// skin.ink con opacidad, para el brillo superior de cada bloque/paleta/bola y
+// el subtítulo tenue del HUD — únicos usos que necesitaban blanco/ink translúcido.
+function withAlpha(hex: string, alpha: number): string {
+  const h = hex.replace("#", "");
+  const full =
+    h.length === 3
+      ? h
+          .split("")
+          .map((c) => c + c)
+          .join("")
+      : h;
+  const n = parseInt(full, 16);
+  const r = (n >> 16) & 255;
+  const g = (n >> 8) & 255;
+  const b = n & 255;
+  return `rgba(${r},${g},${b},${alpha.toFixed(2)})`;
+}
 
 interface Block {
   x: number;
@@ -126,10 +137,30 @@ const LEVELS: Level[] = (() => {
 export function startBloques(
   canvas: HTMLCanvasElement,
   { onState, onGameOver }: GameCallbacks,
+  skin: Skin = SKINS.clasico,
 ): GameHandle {
   canvas.width = W;
   canvas.height = H;
   const ctx = canvas.getContext("2d")!;
+
+  // Resuelve los 7 nombres de color de nivel contra la skin activa, en cada
+  // llamada (no cacheado) para que un cambio de skin en caliente se refleje
+  // sin reiniciar la partida.
+  function blockColor(name: string): string {
+    switch (name) {
+      case "cyan":
+      case "green":
+        return skin.accent;
+      case "magenta":
+      case "hotpink":
+        return skin.accent2;
+      case "yellow":
+      case "red":
+        return skin.warn;
+      default: // gray
+        return skin.ink;
+    }
+  }
 
   const paddle = { x: 0, y: 560, w: 81, h: 14 };
   const ball = { x: 0, y: 0, w: 16, h: 16, vx: BASE_BALL_VX, vy: BASE_BALL_VY };
@@ -316,39 +347,39 @@ export function startBloques(
   ) {
     ctx.fillStyle = color;
     ctx.fillRect(x + 1, y + 1, w - 2, h - 2);
-    ctx.fillStyle = "rgba(255,255,255,0.18)";
+    ctx.fillStyle = withAlpha(skin.ink, 0.18);
     ctx.fillRect(x + 1, y + 1, w - 2, 4);
   }
 
   function draw() {
-    ctx.fillStyle = "#000";
+    ctx.fillStyle = skin.bg;
     ctx.fillRect(0, 0, W, H);
 
     for (const block of blocks) {
       if (block.alive)
-        fillBlock(block.x, block.y, block.w, block.h, hex(block.color));
+        fillBlock(block.x, block.y, block.w, block.h, blockColor(block.color));
     }
 
     // El original anima 4 frames del spritesheet; aquí el bloque se desvanece.
     for (const exp of explosions) {
       ctx.globalAlpha = Math.max(0, 1 - exp.elapsed / EXPLOSION_DURATION);
-      fillBlock(exp.x, exp.y, exp.w, exp.h, hex(exp.color));
+      fillBlock(exp.x, exp.y, exp.w, exp.h, blockColor(exp.color));
       ctx.globalAlpha = 1;
     }
 
-    fillBlock(paddle.x, paddle.y, paddle.w, paddle.h, COLORS.cyan);
-    fillBlock(ball.x, ball.y, ball.w, ball.h, COLORS.yellow);
+    fillBlock(paddle.x, paddle.y, paddle.w, paddle.h, skin.accent);
+    fillBlock(ball.x, ball.y, ball.w, ball.h, skin.accent2);
 
     // HUD del canvas, duplicado a propósito con el HUD React.
     ctx.textBaseline = "top";
-    ctx.fillStyle = "rgba(255,255,255,0.55)";
+    ctx.fillStyle = withAlpha(skin.ink, 0.55);
     ctx.font = "11px monospace";
     ctx.textAlign = "left";
     ctx.fillText("PUNTUACIÓN", 16, 16);
     ctx.textAlign = "center";
     ctx.fillText("NIVEL", W / 2, 16);
 
-    ctx.fillStyle = "#fff";
+    ctx.fillStyle = skin.ink;
     ctx.font = "bold 22px monospace";
     ctx.textAlign = "left";
     ctx.fillText(score.toLocaleString("es-ES"), 16, 32);
@@ -358,7 +389,7 @@ export function startBloques(
     const size = 16;
     for (let i = 0; i < lives; i++) {
       const bx = W - 16 - (lives - i) * (size + 4);
-      fillBlock(bx, 16, size, size, COLORS.yellow);
+      fillBlock(bx, 16, size, size, skin.warn);
     }
   }
 
