@@ -100,22 +100,22 @@ const FRUITS: { x: number; y: number; w: number; h: number }[] = [
 
 ## Acceptance criteria
 
-- [ ] `/juego/snake` existe, muestra la ficha del catálogo con el cover verde de `cover-snake` y su sidebar de leaderboard (top 10, igual que los otros juegos).
-- [ ] En `/juego/snake/jugar` la serpiente se mueve con las flechas **y** con `WASD`, y no puede invertir dirección instantáneamente sobre sí misma.
-- [ ] Comer una fruta suma exactamente 10 puntos, hace crecer la serpiente un segmento y aparece una fruta nueva dibujada con el sprite real (no un cuadrado) una vez cargada la imagen.
-- [ ] Cada 50 puntos sube el nivel y la serpiente se mueve visiblemente más rápido; el HUD React y el del canvas muestran el mismo nivel.
-- [ ] Tocar cualquier borde del canvas (tablero `40×40`) termina la partida.
-- [ ] Chocar contra el propio cuerpo termina la partida.
-- [ ] `PAUSA` congela el movimiento (el loop deja de avanzar) pero la serpiente y la fruta siguen visibles (no se queda en negro); `REANUDAR` no produce un salto de posición.
-- [ ] El botón `FIN` termina la partida con la puntuación acumulada hasta ese momento, una sola vez, y abre el modal de fin de partida con el campo de nombre y `GUARDAR PUNTUACIÓN`.
-- [ ] Pulsar las flechas o `WASD` durante la partida no hace scroll de la página.
-- [ ] El HUD React muestra PUNTUACIÓN, VIDAS (fijo en 1) y NIVEL.
-- [ ] La fila de controles bajo el CRT es `"↑ ↓ ← → MOVER · WASD TAMBIÉN"`.
-- [ ] Terminar la partida guarda una puntuación real con `saveScore`, y aparece en el sidebar de `/juego/snake`, en su propio tab del Salón de la Fama (aparece solo, sin tocar `salon-de-la-fama/client.tsx`) y en el tab GLOBAL.
-- [ ] Salir de la pantalla detiene el loop y quita el listener de teclado: volver a entrar no duplica el juego ni acelera la serpiente.
-- [ ] `JUGAR DE NUEVO` empieza una partida nueva desde 0 puntos, nivel 1 y una serpiente de tamaño inicial.
-- [ ] Un id que no está en `games` sigue devolviendo 404.
-- [ ] `npm run lint` y `npm run build` terminan sin errores.
+- [X] `/juego/snake` existe, muestra la ficha del catálogo con el cover verde de `cover-snake` y su sidebar de leaderboard (top 10, igual que los otros juegos).
+- [X] En `/juego/snake/jugar` la serpiente se mueve con las flechas **y** con `WASD`, y no puede invertir dirección instantáneamente sobre sí misma.
+- [X] Comer una fruta suma exactamente 10 puntos, hace crecer la serpiente un segmento y aparece una fruta nueva dibujada con el sprite real (no un cuadrado) una vez cargada la imagen.
+- [X] Cada 50 puntos sube el nivel y la serpiente se mueve visiblemente más rápido; el HUD React y el del canvas muestran el mismo nivel.
+- [X] Tocar cualquier borde del canvas (tablero `40×40`) termina la partida.
+- [X] Chocar contra el propio cuerpo termina la partida.
+- [X] `PAUSA` congela el movimiento (el loop deja de avanzar) pero la serpiente y la fruta siguen visibles (no se queda en negro); `REANUDAR` no produce un salto de posición.
+- [X] El botón `FIN` termina la partida con la puntuación acumulada hasta ese momento, una sola vez, y abre el modal de fin de partida con el campo de nombre y `GUARDAR PUNTUACIÓN`.
+- [X] Pulsar las flechas o `WASD` durante la partida no hace scroll de la página.
+- [X] El HUD React muestra PUNTUACIÓN, VIDAS (fijo en 1) y NIVEL.
+- [X] La fila de controles bajo el CRT es `"↑ ↓ ← → MOVER · WASD TAMBIÉN"`.
+- [X] Terminar la partida guarda una puntuación real con `saveScore`, y aparece en el sidebar de `/juego/snake`, en su propio tab del Salón de la Fama (aparece solo, sin tocar `salon-de-la-fama/client.tsx`) y en el tab GLOBAL.
+- [X] Salir de la pantalla detiene el loop y quita el listener de teclado: volver a entrar no duplica el juego ni acelera la serpiente.
+- [X] `JUGAR DE NUEVO` empieza una partida nueva desde 0 puntos, nivel 1 y una serpiente de tamaño inicial.
+- [X] Un id que no está en `games` sigue devolviendo 404.
+- [X] `npm run lint` y `npm run build` terminan sin errores.
 
 ## Decisions taken and discarded
 
