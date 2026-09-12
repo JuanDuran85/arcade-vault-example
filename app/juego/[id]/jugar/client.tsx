@@ -2,11 +2,17 @@
 
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useSession } from "@/lib/session";
 import { saveScore } from "@/lib/scores";
 import { createClient } from "@/lib/supabase/client";
 import type { Game } from "@/lib/types";
-import { GAMES, type GameHandle, type GameState } from "@/lib/games/registry";
+import {
+  GAMES,
+  type GameHandle,
+  type GameState,
+  type TouchButton,
+} from "@/lib/games/registry";
 import { SKINS, type Skin, type SkinId } from "@/lib/games/skins";
 
 // Todos los juegos arrancan sin puntos; el juego notifica sus vidas reales en
@@ -66,6 +72,66 @@ function GameCanvas({
   return <canvas ref={canvasRef} className="game-canvas" />;
 }
 
+// Space es la única tecla cuyo `key` no coincide con su `code`.
+function keyFromCode(code: string): string {
+  return code === "Space" ? " " : code;
+}
+
+// Botones táctiles: despachan KeyboardEvent sintéticos a `window`, donde los
+// cuatro juegos ya escuchan keydown/keyup. Mantener pulsado = tecla mantenida,
+// así que el disparo continuo mientras se mantiene presionado ya sale gratis
+// del lado del juego (asteroids.ts lee `keys["Space"]`, no un flanco).
+function TouchPad({ buttons }: { buttons: TouchButton[] }) {
+  const send = (type: "keydown" | "keyup", code: string) => {
+    window.dispatchEvent(
+      new KeyboardEvent(type, { key: keyFromCode(code), code }),
+    );
+  };
+
+  const renderBtn = (b: TouchButton) => (
+    <button
+      key={b.hint ? undefined : b.code}
+      type="button"
+      className="btn"
+      data-code={b.code}
+      onPointerDown={() => send("keydown", b.code)}
+      onPointerUp={() => send("keyup", b.code)}
+      onPointerCancel={() => send("keyup", b.code)}
+      onPointerLeave={() => send("keyup", b.code)}
+    >
+      {b.label}
+    </button>
+  );
+
+  // El botón de acción puede traer un `hint` (ej. "Disparar" sobre el botón
+  // "A"); solo él se envuelve para no romper el grid-area del d-pad.
+  const renderAction = (b: TouchButton) =>
+    b.hint ? (
+      <div key={b.code} className="touch-action-wrap">
+        <span className="touch-hint">{b.hint}</span>
+        {renderBtn(b)}
+      </div>
+    ) : (
+      renderBtn(b)
+    );
+
+  // Flechas en cruz (d-pad) + el resto (disparar/soltar…) como botón de
+  // acción aparte, mismo componente para los cuatro juegos.
+  const dpad = buttons.filter((b) => b.code.startsWith("Arrow"));
+  const actions = buttons.filter((b) => !b.code.startsWith("Arrow"));
+
+  return (
+    <div className="touch-pad">
+      {dpad.length > 0 && (
+        <div className="touch-dpad">{dpad.map(renderBtn)}</div>
+      )}
+      {actions.length > 0 && (
+        <div className="touch-actions">{actions.map(renderAction)}</div>
+      )}
+    </div>
+  );
+}
+
 const SKIN_ORDER: SkinId[] = ["clasico", "neon", "retro"];
 const SKIN_LABELS: Record<SkinId, string> = {
   clasico: "CLÁSICO",
@@ -81,6 +147,7 @@ export default function GamePlayerClient({
   id: string;
 }) {
   const entry = GAMES[id];
+  const router = useRouter();
   const handleRef = useRef<GameHandle | null>(null);
   const [runId, setRunId] = useState(0);
   const { user } = useSession();
@@ -128,12 +195,10 @@ export default function GamePlayerClient({
       return next;
     });
 
-  const cycleSkin = () =>
-    setSkinId((s) => {
-      const next = SKIN_ORDER[(SKIN_ORDER.indexOf(s) + 1) % SKIN_ORDER.length];
-      localStorage.setItem("av_skin", next);
-      return next;
-    });
+  const selectSkin = (next: SkinId) => {
+    setSkinId(next);
+    localStorage.setItem("av_skin", next);
+  };
 
   const onGameState = useCallback((s: GameState) => setState(s), []);
 
@@ -159,6 +224,50 @@ export default function GamePlayerClient({
     setError(null);
     setRunId((r) => r + 1); // remonta el canvas → partida nueva
   };
+
+  // Botones compartidos entre la barra superior (mouse) y la barra bajo el
+  // gamepad (dedo, @media pointer:coarse) — mismo elemento en dos posiciones,
+  // sin duplicar el JSX de cada uno.
+  const pauseBtn = (
+    <button className="btn yellow" onClick={togglePause}>
+      {paused ? "REANUDAR" : "PAUSA"}
+    </button>
+  );
+  const soundBtn = entry.sound && (
+    <button
+      className="btn"
+      onClick={toggleMuted}
+      aria-pressed={muted}
+      suppressHydrationWarning
+    >
+      {muted ? "SONIDO" : "SILENCIO"}
+    </button>
+  );
+  const skinSelect = entry.skins && (
+    <select
+      className="btn"
+      value={skinId}
+      onChange={(e) => selectSkin(e.target.value as SkinId)}
+      aria-label="Skin"
+      suppressHydrationWarning
+    >
+      {SKIN_ORDER.map((s) => (
+        <option key={s} value={s}>
+          {SKIN_LABELS[s]}
+        </option>
+      ))}
+    </select>
+  );
+  const finBtn = (
+    <button className="btn magenta" onClick={endGame}>
+      FIN
+    </button>
+  );
+  const salirLink = (
+    <Link href={`/juego/${id}`} className="btn ghost">
+      SALIR
+    </Link>
+  );
 
   const handleSave = async () => {
     setSaving(true);
@@ -207,39 +316,11 @@ export default function GamePlayerClient({
           )}
         </div>
         <div className="hud-actions">
-          <button className="btn yellow" onClick={togglePause}>
-            {paused ? "REANUDAR" : "PAUSA"}
-          </button>
-          {entry.sound && (
-            <button
-              className="btn"
-              onClick={toggleMuted}
-              aria-pressed={muted}
-              // El servidor no tiene localStorage y siempre pinta SILENCIO; si
-              // el jugador lo tenía silenciado, el cliente pinta SONIDO. Es la
-              // única diferencia y es intencional.
-              suppressHydrationWarning
-            >
-              {muted ? "SONIDO" : "SILENCIO"}
-            </button>
-          )}
-          {entry.skins && (
-            <button
-              className="btn"
-              onClick={cycleSkin}
-              // Mismo motivo que el botón SILENCIO: el servidor siempre pinta
-              // CLÁSICO y el cliente puede traer otra skin de localStorage.
-              suppressHydrationWarning
-            >
-              SKIN: {SKIN_LABELS[skinId]}
-            </button>
-          )}
-          <button className="btn magenta" onClick={endGame}>
-            FIN
-          </button>
-          <Link href={`/juego/${id}`} className="btn ghost">
-            SALIR
-          </Link>
+          {pauseBtn}
+          {soundBtn}
+          {skinSelect}
+          {finBtn}
+          {salirLink}
         </div>
       </div>
 
@@ -285,6 +366,22 @@ export default function GamePlayerClient({
           <span>CARGA · 1MB</span>
         </div>
         <div className="game-controls mono">{entry.controls}</div>
+      </div>
+
+      <TouchPad buttons={entry.touch} />
+
+      {/* Misma barra que .hud-actions + REGRESAR; solo visible bajo el
+          gamepad con @media (pointer: coarse), que a su vez oculta la de
+          arriba — así el dedo nunca ve las dos. */}
+      <div className="touch-controls mono">
+        {pauseBtn}
+        {soundBtn}
+        {skinSelect}
+        <button className="btn ghost" onClick={() => router.back()}>
+          REGRESAR
+        </button>
+        {finBtn}
+        {salirLink}
       </div>
 
       {over && (
