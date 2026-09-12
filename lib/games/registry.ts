@@ -3,6 +3,7 @@ import { startAsteroids } from "./asteroids";
 import { startBloques } from "./bloques";
 import { startCaida } from "./caida";
 import { startSnake } from "./snake";
+import type { Skin } from "./skins";
 
 export interface GameState {
   score: number;
@@ -24,15 +25,21 @@ export interface GameHandle {
 }
 
 interface GameEntry {
-  start(canvas: HTMLCanvasElement, callbacks: GameCallbacks): GameHandle;
+  start(
+    canvas: HTMLCanvasElement,
+    callbacks: GameCallbacks,
+    skin?: Skin,
+  ): GameHandle;
   controls: string; // fila de controles bajo el marco CRT
   sound?: boolean; // pinta el botón de silencio; hoy solo bloques
+  skins?: boolean; // pinta el selector de skin; los juegos ya migrados
 }
 
 export const GAMES: Record<string, GameEntry> = {
   rocas: {
     start: startAsteroids,
     controls: "← → ROTAR · ↑ PROPULSAR · ESPACIO DISPARAR",
+    skins: true,
   },
   caida: {
     start: startCaida,
@@ -42,9 +49,11 @@ export const GAMES: Record<string, GameEntry> = {
     start: startBloques,
     controls: "← → MOVER PALETA · O MUEVE EL RATÓN",
     sound: true,
+    skins: true,
   },
   snake: {
     start: startSnake,
     controls: "↑ ↓ ← → MOVER · WASD TAMBIÉN",
+    skins: true,
   },
 };

@@ -7,6 +7,7 @@ import { saveScore } from "@/lib/scores";
 import { createClient } from "@/lib/supabase/client";
 import type { Game } from "@/lib/types";
 import { GAMES, type GameHandle, type GameState } from "@/lib/games/registry";
+import { SKINS, type Skin, type SkinId } from "@/lib/games/skins";
 
 // Todos los juegos arrancan sin puntos; el juego notifica sus vidas reales en
 // el primer notify(), síncrono dentro de start().
@@ -16,6 +17,7 @@ function GameCanvas({
   start,
   paused,
   muted,
+  skinId,
   onState,
   onGameOver,
   handleRef,
@@ -23,18 +25,22 @@ function GameCanvas({
   start: (typeof GAMES)[string]["start"];
   paused: boolean;
   muted: boolean;
+  skinId: SkinId;
   onState: (s: GameState) => void;
   onGameOver: (finalScore: number) => void;
   handleRef: React.RefObject<GameHandle | null>;
 }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  // El juego guarda esta misma referencia; cambiar de skin muta sus campos
+  // en vez de reemplazar el objeto, así el juego en curso no se reinicia.
+  const skinRef = useRef<Skin>({ ...SKINS[skinId] });
 
   // Los callbacks llegan memoizados del padre: el juego no se reinicia en
   // cada render. `paused` va en su propio efecto por lo mismo.
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-    const handle = start(canvas, { onState, onGameOver });
+    const handle = start(canvas, { onState, onGameOver }, skinRef.current);
     handleRef.current = handle;
     return () => {
       handle.stop();
@@ -51,8 +57,21 @@ function GameCanvas({
     handleRef.current?.setMuted?.(muted);
   }, [muted, handleRef]);
 
+  // ponytail: mutación in-place para no reiniciar la partida; setSkin() en
+  // GameHandle si algún juego necesita reaccionar al cambio
+  useEffect(() => {
+    Object.assign(skinRef.current, SKINS[skinId]);
+  }, [skinId]);
+
   return <canvas ref={canvasRef} className="game-canvas" />;
 }
+
+const SKIN_ORDER: SkinId[] = ["clasico", "neon", "retro"];
+const SKIN_LABELS: Record<SkinId, string> = {
+  clasico: "CLÁSICO",
+  neon: "NEÓN",
+  retro: "RETRO",
+};
 
 export default function GamePlayerClient({
   game,
@@ -68,7 +87,14 @@ export default function GamePlayerClient({
   const [state, setState] = useState<GameState>(INITIAL_STATE);
   const [paused, setPaused] = useState(false);
   const [muted, setMuted] = useState(
-    () => typeof window !== "undefined" && localStorage.getItem("av_muted") === "1",
+    () =>
+      typeof window !== "undefined" && localStorage.getItem("av_muted") === "1",
+  );
+  const [skinId, setSkinId] = useState<SkinId>(
+    () =>
+      (typeof window !== "undefined" &&
+        (localStorage.getItem("av_skin") as SkinId | null)) ||
+      "clasico",
   );
   const [over, setOver] = useState(false);
   const [name, setName] = useState("");
@@ -99,6 +125,13 @@ export default function GamePlayerClient({
     setMuted((m) => {
       const next = !m;
       localStorage.setItem("av_muted", next ? "1" : "0");
+      return next;
+    });
+
+  const cycleSkin = () =>
+    setSkinId((s) => {
+      const next = SKIN_ORDER[(SKIN_ORDER.indexOf(s) + 1) % SKIN_ORDER.length];
+      localStorage.setItem("av_skin", next);
       return next;
     });
 
@@ -190,6 +223,17 @@ export default function GamePlayerClient({
               {muted ? "SONIDO" : "SILENCIO"}
             </button>
           )}
+          {entry.skins && (
+            <button
+              className="btn"
+              onClick={cycleSkin}
+              // Mismo motivo que el botón SILENCIO: el servidor siempre pinta
+              // CLÁSICO y el cliente puede traer otra skin de localStorage.
+              suppressHydrationWarning
+            >
+              SKIN: {SKIN_LABELS[skinId]}
+            </button>
+          )}
           <button className="btn magenta" onClick={endGame}>
             FIN
           </button>
@@ -206,6 +250,7 @@ export default function GamePlayerClient({
             start={entry.start}
             paused={paused}
             muted={muted}
+            skinId={skinId}
             onState={onGameState}
             onGameOver={onGameOver}
             handleRef={handleRef}
