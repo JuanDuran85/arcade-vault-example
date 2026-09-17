@@ -36,6 +36,9 @@ const COLORS = {
   frog: "#7ee081",
   car: "#e57373",
   log: "#8d5b32",
+  turtleUp: "#3d8f52",
+  turtleWarning: "#d9b03c",
+  turtleDown: "#0a4a5c",
 };
 
 interface LaneConfig {
@@ -50,6 +53,32 @@ interface Lane extends LaneConfig {
   obstacles: { x: number }[];
 }
 
+// SPEC 03: dos de los cinco carriles de río son "turtle" (se hunden en un
+// ciclo) en vez de "log" (soporte constante). up/warning sostienen a la
+// rana; down no, igual que río sin tronco debajo.
+type RiverObstacleKind = "log" | "turtle";
+type TurtlePhase = "up" | "warning" | "down";
+
+const TURTLE_UP_MS = 3000;
+const TURTLE_WARNING_MS = 800;
+const TURTLE_DOWN_MS = 1500;
+const TURTLE_CYCLE_MS = TURTLE_UP_MS + TURTLE_WARNING_MS + TURTLE_DOWN_MS;
+
+interface RiverObstacle {
+  x: number;
+  phase: TurtlePhase; // fijo en "up" para obstáculos "log"
+  elapsed: number;
+}
+
+interface RiverLaneConfig extends LaneConfig {
+  kind: RiverObstacleKind;
+}
+
+interface RiverLane extends Lane {
+  kind: RiverObstacleKind;
+  obstacles: RiverObstacle[];
+}
+
 // Valores de referencia del spec: mantienen la variedad dir/velocidad entre carriles.
 const ROAD_LANE_CONFIG: LaneConfig[] = [
   { row: 7, dir: -1, speed: 90, w: 60, gap: 160 },
@@ -59,18 +88,37 @@ const ROAD_LANE_CONFIG: LaneConfig[] = [
   { row: 11, dir: -1, speed: 100, w: 70, gap: 200 },
 ];
 
-const RIVER_LANE_CONFIG: LaneConfig[] = [
-  { row: 1, dir: 1, speed: 70, w: 120, gap: 100 },
-  { row: 2, dir: -1, speed: 90, w: 100, gap: 140 },
-  { row: 3, dir: 1, speed: 80, w: 140, gap: 120 },
-  { row: 4, dir: -1, speed: 60, w: 100, gap: 160 },
-  { row: 5, dir: 1, speed: 100, w: 120, gap: 100 },
+const RIVER_LANE_CONFIG: RiverLaneConfig[] = [
+  { row: 1, dir: 1, speed: 70, w: 120, gap: 100, kind: "log" },
+  { row: 2, dir: -1, speed: 90, w: 100, gap: 140, kind: "log" },
+  { row: 3, dir: 1, speed: 80, w: 140, gap: 120, kind: "turtle" },
+  { row: 4, dir: -1, speed: 60, w: 100, gap: 160, kind: "log" },
+  { row: 5, dir: 1, speed: 100, w: 120, gap: 100, kind: "turtle" },
 ];
 
 function createLane(config: LaneConfig): Lane {
   const span = config.w + config.gap;
   const count = Math.ceil(W / span) + 1;
   const obstacles = Array.from({ length: count }, (_, i) => ({ x: i * span }));
+  return { ...config, obstacles };
+}
+
+function turtlePhaseAt(elapsed: number): TurtlePhase {
+  if (elapsed < TURTLE_UP_MS) return "up";
+  if (elapsed < TURTLE_UP_MS + TURTLE_WARNING_MS) return "warning";
+  return "down";
+}
+
+// elapsed inicial aleatorio (solo turtle) para que los grupos de un mismo
+// carril no se hundan todos a la vez; log queda fijo en "up".
+function createRiverLane(config: RiverLaneConfig): RiverLane {
+  const span = config.w + config.gap;
+  const count = Math.ceil(W / span) + 1;
+  const obstacles: RiverObstacle[] = Array.from({ length: count }, (_, i) => {
+    const elapsed =
+      config.kind === "turtle" ? Math.random() * TURTLE_CYCLE_MS : 0;
+    return { x: i * span, elapsed, phase: turtlePhaseAt(elapsed) };
+  });
   return { ...config, obstacles };
 }
 
@@ -85,7 +133,7 @@ export function startRana(
   const frog = { x: STARTING_COL * CELL, row: STARTING_ROW };
   const slots: boolean[] = [false, false, false, false, false];
   const roadLanes: Lane[] = ROAD_LANE_CONFIG.map(createLane);
-  const riverLanes: Lane[] = RIVER_LANE_CONFIG.map(createLane);
+  const riverLanes: RiverLane[] = RIVER_LANE_CONFIG.map(createRiverLane);
 
   let score = 0;
   let lives = 3;
@@ -216,9 +264,26 @@ export function startRana(
     }
   }
 
+  const TURTLE_COLOR: Record<TurtlePhase, string> = {
+    up: COLORS.turtleUp,
+    warning: COLORS.turtleWarning,
+    down: COLORS.turtleDown,
+  };
+
+  function drawRiverLane(lane: RiverLane) {
+    if (lane.kind === "log") {
+      fillLaneObstacles(lane, COLORS.log);
+      return;
+    }
+    for (const obs of lane.obstacles) {
+      ctx.fillStyle = TURTLE_COLOR[obs.phase];
+      ctx.fillRect(obs.x + 2, rowY(lane.row) + 4, lane.w - 4, CELL - 8);
+    }
+  }
+
   function drawLanes() {
     for (const lane of roadLanes) fillLaneObstacles(lane, COLORS.car);
-    for (const lane of riverLanes) fillLaneObstacles(lane, COLORS.log);
+    for (const lane of riverLanes) drawRiverLane(lane);
   }
 
   // HUD del canvas, duplicado a propósito con el HUD React. Vive en la
@@ -325,7 +390,7 @@ export function startRana(
       score += 100;
       slots.fill(false);
       level++;
-      speedMultiplier = Math.min(2.5, 1 + (level - 1) * 0.15);
+      speedMultiplier = 1 + (level - 1) * 0.15; // SPEC 03: sin techo de 2.5x
       playMelody([
         { freq: 523, durationMs: 70 },
         { freq: 659, durationMs: 70 },
@@ -353,24 +418,27 @@ export function startRana(
     if (hit) loseLife("atropello");
   }
 
-  // Sin tronco debajo: pierde una vida de inmediato. Con tronco: la arrastra
-  // con su movimiento; si eso la saca por completo del canvas, pierde una vida.
+  // Sin soporte debajo (sin tronco, o tortuga hundida): pierde una vida de
+  // inmediato. Con soporte: la arrastra con su movimiento; si eso la saca
+  // por completo del canvas, pierde una vida.
   function checkRiverCollision(dt: number) {
     const lane = riverLanes.find((l) => l.row === frog.row);
     if (!lane) return;
-    const log = lane.obstacles.find((obs) =>
-      rectsOverlap(
-        frog.x,
-        rowY(frog.row),
-        CELL,
-        CELL,
-        obs.x,
-        rowY(lane.row),
-        lane.w,
-        CELL,
-      ),
+    const support = lane.obstacles.find(
+      (obs) =>
+        obs.phase !== "down" &&
+        rectsOverlap(
+          frog.x,
+          rowY(frog.row),
+          CELL,
+          CELL,
+          obs.x,
+          rowY(lane.row),
+          lane.w,
+          CELL,
+        ),
     );
-    if (!log) {
+    if (!support) {
       loseLife("ahogo");
       return;
     }
@@ -378,10 +446,22 @@ export function startRana(
     if (frog.x + CELL < 0 || frog.x > W) loseLife("ahogo");
   }
 
+  // Avanza fase/elapsed de cada tortuga; no hace nada en carriles "log".
+  function advanceTurtlePhases(lane: RiverLane, dt: number) {
+    if (lane.kind !== "turtle") return;
+    for (const obs of lane.obstacles) {
+      obs.elapsed = (obs.elapsed + dt * 1000) % TURTLE_CYCLE_MS;
+      obs.phase = turtlePhaseAt(obs.elapsed);
+    }
+  }
+
   function update(dt: number) {
     if (paused || finished) return;
     for (const lane of roadLanes) advanceLane(lane, dt);
-    for (const lane of riverLanes) advanceLane(lane, dt);
+    for (const lane of riverLanes) {
+      advanceLane(lane, dt);
+      advanceTurtlePhases(lane, dt);
+    }
 
     if (ROAD_ROWS.includes(frog.row)) checkRoadCollision();
     else if (RIVER_ROWS.includes(frog.row)) checkRiverCollision(dt);

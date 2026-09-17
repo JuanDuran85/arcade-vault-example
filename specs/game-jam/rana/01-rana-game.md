@@ -147,28 +147,28 @@ Valores de referencia para los carriles (el implementador puede ajustar el detal
 
 ## Acceptance criteria
 
-- [ ] `/juego/rana` existe, muestra el cover verde de `.cover-rana` y su sidebar de leaderboard (top 10).
-- [ ] En `/juego/rana/jugar` la rana salta una celda por pulsación de flecha o `WASD`, y nunca sale del canvas.
-- [ ] Sostener una tecla no dispara más de un salto cada ~120 ms, pese al auto-repeat del teclado.
-- [ ] Pisar un coche en cualquiera de los 5 carriles de carretera pierde una vida y la rana reaparece en la fila de salida.
-- [ ] Quedarse quieta en el río sin un tronco debajo pierde una vida, aunque la rana no se haya movido (el tronco se fue).
-- [ ] Subirse a un tronco arrastra a la rana con su movimiento; si el tronco la saca del canvas, pierde una vida.
-- [ ] Llegar a un nenúfar libre suma 50 puntos, lo marca ocupado y hace reaparecer a la rana en la salida.
-- [ ] Llegar a la fila de meta fuera de un nenúfar, o sobre uno ya ocupado, pierde una vida.
-- [ ] Cada salto hacia una fila nunca antes alcanzada en la vida actual suma exactamente 10 puntos; retroceder no resta puntos ni permite repetirlos.
-- [ ] Llenar los 5 nenúfares suma 100 puntos, sube el nivel, vacía los nenúfares y acelera visiblemente todos los carriles; el multiplicador nunca supera `2.5×`.
-- [ ] A 0 vidas, `onGameOver(score)` se emite una sola vez y abre el modal de fin de partida.
-- [ ] `PAUSA` congela coches, troncos y la rana (no se llama a `update`), pero el tablero se sigue dibujando (no se queda en negro); `REANUDAR` no produce un salto de posición en los obstáculos.
-- [ ] El botón `FIN` termina la partida con la puntuación acumulada hasta ese momento, una sola vez.
-- [ ] Pulsar las flechas o `WASD` durante la partida no hace scroll de la página.
-- [ ] El HUD React muestra PUNTUACIÓN, VIDAS y NIVEL.
-- [ ] La fila de controles bajo el CRT es `"↑ ↓ ← → SALTAR · WASD TAMBIÉN"`.
-- [ ] Terminar la partida guarda una puntuación real con `saveScore`, visible en el sidebar de `/juego/rana`, en su propio tab del Salón de la Fama (aparece solo, sin tocar `salon-de-la-fama/client.tsx`) y en el tab GLOBAL.
-- [ ] Salir de la pantalla detiene el loop y quita el listener de teclado: volver a entrar no duplica carriles ni acelera la rana.
-- [ ] `JUGAR DE NUEVO` empieza una partida nueva con 0 puntos, nivel 1, 3 vidas y los 5 nenúfares vacíos.
-- [ ] `grep` limpio de `new Audio`, `AudioContext`, `localStorage` y `document.` en `lib/games/rana.ts` (este spec no tiene sonido).
-- [ ] Un id que no está en `games` sigue devolviendo 404.
-- [ ] `npm run lint` y `npm run build` terminan sin errores.
+- [X] `/juego/rana` existe, muestra el cover verde de `.cover-rana` y su sidebar de leaderboard (top 10).
+- [X] En `/juego/rana/jugar` la rana salta una celda por pulsación de flecha o `WASD`, y nunca sale del canvas.
+- [X] Sostener una tecla no dispara más de un salto cada ~120 ms, pese al auto-repeat del teclado.
+- [X] Pisar un coche en cualquiera de los 5 carriles de carretera pierde una vida y la rana reaparece en la fila de salida.
+- [X] Quedarse quieta en el río sin un tronco debajo pierde una vida, aunque la rana no se haya movido (el tronco se fue).
+- [X] Subirse a un tronco arrastra a la rana con su movimiento; si el tronco la saca del canvas, pierde una vida.
+- [X] Llegar a un nenúfar libre suma 50 puntos, lo marca ocupado y hace reaparecer a la rana en la salida.
+- [X] Llegar a la fila de meta fuera de un nenúfar, o sobre uno ya ocupado, pierde una vida.
+- [X] Cada salto hacia una fila nunca antes alcanzada en la vida actual suma exactamente 10 puntos; retroceder no resta puntos ni permite repetirlos.
+- [X] Llenar los 5 nenúfares suma 100 puntos, sube el nivel, vacía los nenúfares y acelera visiblemente todos los carriles; el multiplicador nunca supera `2.5×`.
+- [X] A 0 vidas, `onGameOver(score)` se emite una sola vez y abre el modal de fin de partida.
+- [X] `PAUSA` congela coches, troncos y la rana (no se llama a `update`), pero el tablero se sigue dibujando (no se queda en negro); `REANUDAR` no produce un salto de posición en los obstáculos.
+- [X] El botón `FIN` termina la partida con la puntuación acumulada hasta ese momento, una sola vez.
+- [X] Pulsar las flechas o `WASD` durante la partida no hace scroll de la página.
+- [X] El HUD React muestra PUNTUACIÓN, VIDAS y NIVEL.
+- [X] La fila de controles bajo el CRT es `"↑ ↓ ← → SALTAR · WASD TAMBIÉN"`.
+- [X] Terminar la partida guarda una puntuación real con `saveScore`, visible en el sidebar de `/juego/rana`, en su propio tab del Salón de la Fama (aparece solo, sin tocar `salon-de-la-fama/client.tsx`) y en el tab GLOBAL.
+- [X] Salir de la pantalla detiene el loop y quita el listener de teclado: volver a entrar no duplica carriles ni acelera la rana.
+- [X] `JUGAR DE NUEVO` empieza una partida nueva con 0 puntos, nivel 1, 3 vidas y los 5 nenúfares vacíos.
+- [X] `grep` limpio de `new Audio`, `AudioContext`, `localStorage` y `document.` en `lib/games/rana.ts` (este spec no tiene sonido).
+- [X] Un id que no está en `games` sigue devolviendo 404.
+- [X] `npm run lint` y `npm run build` terminan sin errores.
 
 ## Decisions taken and discarded
 
