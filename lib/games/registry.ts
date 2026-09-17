@@ -91,6 +91,7 @@ export const GAMES: Record<string, GameEntry> = {
   rana: {
     start: startRana,
     controls: "↑ ↓ ← → SALTAR · WASD TAMBIÉN",
+    sound: true,
     touch: [
       { label: "↑", code: "ArrowUp" },
       { label: "↓", code: "ArrowDown" },
