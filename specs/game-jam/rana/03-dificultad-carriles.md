@@ -1,6 +1,6 @@
 # SPEC 03 (game-jam/rana) — Dificultad de carriles: tortugas que se hunden y velocidad sin techo
 
-> **Status:** Draft
+> **Status:** Implementado
 > **Depends on:** SPEC 06, SPEC 07, 02-sonidos-rana
 > **Date:** 2026-09-11
 > **Objective:** Dar variedad a los carriles del río de `rana` con tortugas que se hunden periódicamente y quitar el techo de `2.5×` al multiplicador de velocidad de nivel, para que la dificultad siga escalando de verdad en partidas largas.
@@ -88,15 +88,15 @@ speedMultiplier = 1 + (level - 1) * 0.15; // sin techo desde este spec
 
 ## Acceptance criteria
 
-- [ ] Los carriles de río en las filas 3 y 5 muestran tortugas, visualmente distintas de los troncos; las filas 1, 2 y 4 siguen con troncos, sin cambios de comportamiento.
-- [ ] Cada tortuga cicla, sin intervención del jugador, entre "a flote", "a punto de hundirse" y "hundida", de forma visible por su color.
-- [ ] Pararse sobre una tortuga hundida (`down`) pierde una vida, igual que quedarse en agua sin tronco.
-- [ ] Pararse sobre una tortuga a flote (`up`) o en aviso (`warning`) sostiene a la rana igual que un tronco, incluido el arrastre horizontal con la velocidad del carril.
-- [ ] En un mismo carril de tortugas, no todos los grupos se hunden al mismo tiempo (fase inicial desincronizada).
-- [ ] El multiplicador de velocidad de carriles sigue subiendo más allá de `2.5×` en niveles altos (verificable llegando al menos a nivel 15 en una partida de prueba).
-- [ ] El resto de la mecánica de SPEC 01 y SPEC 02 (coches, troncos de los otros 3 carriles, nenúfares, puntuación por avance, vidas, sonido, pausa, fin de partida) sigue igual.
-- [ ] Todos los criterios de aceptación de SPEC 01 y SPEC 02 siguen pasando, salvo el techo de `2.5×` de SPEC 01, que este spec supera de forma explícita.
-- [ ] `npm run lint` y `npm run build` terminan sin errores.
+- [X] Los carriles de río en las filas 3 y 5 muestran tortugas, visualmente distintas de los troncos; las filas 1, 2 y 4 siguen con troncos, sin cambios de comportamiento.
+- [X] Cada tortuga cicla, sin intervención del jugador, entre "a flote", "a punto de hundirse" y "hundida", de forma visible por su color.
+- [X] Pararse sobre una tortuga hundida (`down`) pierde una vida, igual que quedarse en agua sin tronco.
+- [X] Pararse sobre una tortuga a flote (`up`) o en aviso (`warning`) sostiene a la rana igual que un tronco, incluido el arrastre horizontal con la velocidad del carril.
+- [X] En un mismo carril de tortugas, no todos los grupos se hunden al mismo tiempo (fase inicial desincronizada).
+- [X] El multiplicador de velocidad de carriles sigue subiendo más allá de `2.5×` en niveles altos (verificable llegando al menos a nivel 15 en una partida de prueba).
+- [X] El resto de la mecánica de SPEC 01 y SPEC 02 (coches, troncos de los otros 3 carriles, nenúfares, puntuación por avance, vidas, sonido, pausa, fin de partida) sigue igual.
+- [X] Todos los criterios de aceptación de SPEC 01 y SPEC 02 siguen pasando, salvo el techo de `2.5×` de SPEC 01, que este spec supera de forma explícita.
+- [X] `npm run lint` y `npm run build` terminan sin errores.
 
 ## Decisions taken and discarded
 

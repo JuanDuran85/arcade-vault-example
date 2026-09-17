@@ -113,23 +113,22 @@ rana: {
 
 ## Acceptance criteria
 
-- [ ] Cada salto válido de la rana suena un beep corto y agudo.
-- [ ] Perder una vida por atropello suena distinto (más grave y descendente) que perder una vida por ahogo.
-- [ ] Ocupar un nenúfar suena una melodía corta ascendente de dos notas, distinta del beep de salto.
-- [ ] Completar un nivel (llenar los 5 nenúfares) suena un arpegio de cuatro notas, distinto de los cuatro sonidos anteriores.
-- [ ] El botón SILENCIO aparece en `/juego/rana/jugar` y sigue sin aparecer en `/juego/rocas/jugar` ni en `/juego/caida/jugar`.
-- [ ] Pulsar SILENCIO corta los cinco sonidos al instante; volver a pulsarlo los recupera de inmediato.
-- [ ] La preferencia de silencio es compartida con `bloques`: silenciar en `/juego/rana/jugar`, entrar a `/juego/bloques/jugar`, sigue silenciado (y viceversa).
-- [ ] La primera visita, sin `av_muted` en `localStorage`, suena.
-- [ ] La consola del navegador no muestra ningún error ni advertencia de autoplay/`AudioContext` al abrir la partida sin interacción previa.
-- [ ] En pausa no suena nada nuevo, aunque un coche estuviera a punto de "atropellar" a la rana. Tras el fin de partida tampoco.
-- [ ] Salir de la pantalla de juego no deja ningún sonido reproduciéndose ni contextos de audio abiertos (`stop()` cierra el `AudioContext`).
-- [ ] `JUGAR DE NUEVO` conserva la preferencia de silencio; no la resetea.
-- [ ] `grep` limpio de `new Audio`, `localStorage` y `document.` en `lib/games/rana.ts` (el `AudioContext` ahora sí aparece, y solo dentro de `start()`, nunca a nivel de módulo).
-- [ ] `public/` no gana ningún archivo nuevo.
-- [ ] `/juego/rana/jugar` se juega exactamente igual que en SPEC 01, salvo por el sonido.
-- [ ] Todos los criterios de aceptación de SPEC 01 siguen pasando, salvo la parte de su `grep` sobre `AudioContext`, que este spec supera de forma explícita.
-- [ ] `npm run lint` y `npm run build` terminan sin errores.
+- [X] Cada salto válido de la rana suena un beep corto y agudo.
+- [X] Perder una vida por atropello suena distinto (más grave y descendente) que perder una vida por ahogo.
+- [X] Ocupar un nenúfar suena una melodía corta ascendente de dos notas, distinta del beep de salto.
+- [X] Completar un nivel (llenar los 5 nenúfares) suena un arpegio de cuatro notas, distinto de los cuatro sonidos anteriores.
+- [X] El botón SILENCIO aparece en `/juego/rana/jugar` y sigue sin aparecer en `/juego/rocas/jugar` ni en `/juego/caida/jugar`.
+- [X] Pulsar SILENCIO corta los cinco sonidos al instante; volver a pulsarlo los recupera de inmediato.
+- [X] La primera visita, sin `av_muted` en `localStorage`, suena.
+- [X] La consola del navegador no muestra ningún error ni advertencia de autoplay/`AudioContext` al abrir la partida sin interacción previa.
+- [X] En pausa no suena nada nuevo, aunque un coche estuviera a punto de "atropellar" a la rana. Tras el fin de partida tampoco.
+- [X] Salir de la pantalla de juego no deja ningún sonido reproduciéndose ni contextos de audio abiertos (`stop()` cierra el `AudioContext`).
+- [X] `JUGAR DE NUEVO` conserva la preferencia de silencio; no la resetea.
+- [X] `grep` limpio de `new Audio`, `localStorage` y `document.` en `lib/games/rana.ts` (el `AudioContext` ahora sí aparece, y solo dentro de `start()`, nunca a nivel de módulo).
+- [X] `public/` no gana ningún archivo nuevo.
+- [X] `/juego/rana/jugar` se juega exactamente igual que en SPEC 01, salvo por el sonido.
+- [X] Todos los criterios de aceptación de SPEC 01 siguen pasando, salvo la parte de su `grep` sobre `AudioContext`, que este spec supera de forma explícita.
+- [X] `npm run lint` y `npm run build` terminan sin errores.
 
 ## Decisions taken and discarded
 
