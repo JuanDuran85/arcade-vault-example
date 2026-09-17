@@ -1,6 +1,6 @@
 # SPEC 02 (game-jam/rana) — Sonido en `rana` (sin assets, sintetizado)
 
-> **Status:** Aprobado
+> **Status:** Implementado
 > **Depends on:** SPEC 06, SPEC 07, 01-rana-game
 > **Date:** 2026-09-11
 > **Objective:** Añadir sonido a `rana` reusando los campos `GameEntry.sound?`/`GameHandle.setMuted?` que SPEC 09 ya agregó a `registry.ts`, sintetizando los cinco efectos con Web Audio API porque, a diferencia de `bloques`, no existe ningún asset de audio original que portar.
