@@ -1,6 +1,6 @@
 # SPEC 01 (game-jam/rana) — Quinto juego real: `rana` (Frogger)
 
-> **Status:** Draft
+> **Status:** Aprobado
 > **Depends on:** SPEC 06, SPEC 07
 > **Date:** 2026-09-11
 > **Objective:** Diseñar y construir `rana` desde cero en `lib/games/rana.ts` — una rana que cruza carriles de carretera y de río sin ningún motor de físicas, solo movimiento en grilla y cinemática simple —, registrarla en el catálogo y en `registry.ts` para que `/juego/rana/jugar` sea una partida real que guarda puntuación.

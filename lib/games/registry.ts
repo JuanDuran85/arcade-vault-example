@@ -2,6 +2,7 @@
 import { startAsteroids } from "./asteroids";
 import { startBloques } from "./bloques";
 import { startCaida } from "./caida";
+import { startRana } from "./rana";
 import { startSnake } from "./snake";
 import type { Skin } from "./skins";
 
@@ -80,6 +81,16 @@ export const GAMES: Record<string, GameEntry> = {
     start: startSnake,
     controls: "↑ ↓ ← → MOVER · WASD TAMBIÉN",
     skins: true,
+    touch: [
+      { label: "↑", code: "ArrowUp" },
+      { label: "↓", code: "ArrowDown" },
+      { label: "←", code: "ArrowLeft" },
+      { label: "→", code: "ArrowRight" },
+    ],
+  },
+  rana: {
+    start: startRana,
+    controls: "↑ ↓ ← → SALTAR · WASD TAMBIÉN",
     touch: [
       { label: "↑", code: "ArrowUp" },
       { label: "↓", code: "ArrowDown" },
