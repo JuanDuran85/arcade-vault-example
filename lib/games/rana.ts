@@ -99,6 +99,57 @@ export function startRana(
   let lastTime: number | null = null;
   let rafId = 0;
 
+  // ── Sonido ────────────────────────────────────────────────────────────────
+  // Sintetizado con Web Audio API: no hay ningún game.js de Frogger que
+  // portar assets desde, a diferencia de bloques (SPEC 09). audioCtx se crea
+  // perezosamente en el primer beep(), nunca a nivel de módulo (no existe en
+  // el servidor). muted lo controla la plataforma vía setMuted().
+  let audioCtx: AudioContext | null = null;
+  let muted = false;
+  const pendingMelodyTimeouts: ReturnType<typeof setTimeout>[] = [];
+
+  function beep(
+    freq: number,
+    durationMs: number,
+    type: OscillatorType,
+    glideToFreq?: number,
+  ) {
+    if (muted) return;
+    audioCtx ??= new AudioContext();
+    if (audioCtx.state === "suspended") audioCtx.resume().catch(() => {});
+
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.type = type;
+    osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+    if (glideToFreq !== undefined) {
+      osc.frequency.exponentialRampToValueAtTime(
+        glideToFreq,
+        audioCtx.currentTime + durationMs / 1000,
+      );
+    }
+    gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(
+      0.001,
+      audioCtx.currentTime + durationMs / 1000,
+    );
+    osc.connect(gain).connect(audioCtx.destination);
+    osc.start();
+    osc.stop(audioCtx.currentTime + durationMs / 1000);
+  }
+
+  // Encadena notas en el tiempo: beep() siempre arranca en audioCtx.currentTime,
+  // así que una melodía ascendente necesita programar cada nota con setTimeout.
+  function playMelody(notes: { freq: number; durationMs: number }[]) {
+    let offset = 0;
+    for (const note of notes) {
+      pendingMelodyTimeouts.push(
+        setTimeout(() => beep(note.freq, note.durationMs, "sine"), offset),
+      );
+      offset += note.durationMs;
+    }
+  }
+
   // ── Fin de partida ───────────────────────────────────────────────────────
   function finish() {
     if (finished) return;
@@ -238,8 +289,12 @@ export function startRana(
 
   // lives === 0 termina la partida; si no, reaparece en la salida y arranca
   // una vida nueva (bestRowThisLife se reinicia; una llegada a nenúfar no lo
-  // hace, esa es la misma vida siguiendo).
-  function loseLife() {
+  // hace, esa es la misma vida siguiendo). cause solo decide qué beep suena:
+  // atropello = coche en la carretera, ahogo = todo lo demás (río sin tronco,
+  // tronco que saca del canvas, o aterrizar en el río más allá de un nenúfar).
+  function loseLife(cause: "atropello" | "ahogo") {
+    if (cause === "atropello") beep(220, 150, "sawtooth", 80);
+    else beep(400, 200, "triangle", 100);
     lives--;
     if (lives <= 0) {
       lives = 0;
@@ -255,18 +310,28 @@ export function startRana(
   function handleGoalRow(col: number) {
     const slotIndex = SLOT_COLS.indexOf(col);
     if (slotIndex === -1 || slots[slotIndex]) {
-      loseLife();
+      loseLife("ahogo");
       return;
     }
     slots[slotIndex] = true;
     score += 50;
     respawnPosition();
+    playMelody([
+      { freq: 523, durationMs: 80 },
+      { freq: 659, durationMs: 80 },
+    ]);
 
     if (slots.every(Boolean)) {
       score += 100;
       slots.fill(false);
       level++;
       speedMultiplier = Math.min(2.5, 1 + (level - 1) * 0.15);
+      playMelody([
+        { freq: 523, durationMs: 70 },
+        { freq: 659, durationMs: 70 },
+        { freq: 784, durationMs: 70 },
+        { freq: 1047, durationMs: 70 },
+      ]);
     }
   }
 
@@ -285,7 +350,7 @@ export function startRana(
         CELL,
       ),
     );
-    if (hit) loseLife();
+    if (hit) loseLife("atropello");
   }
 
   // Sin tronco debajo: pierde una vida de inmediato. Con tronco: la arrastra
@@ -306,11 +371,11 @@ export function startRana(
       ),
     );
     if (!log) {
-      loseLife();
+      loseLife("ahogo");
       return;
     }
     frog.x += lane.dir * lane.speed * speedMultiplier * dt;
-    if (frog.x + CELL < 0 || frog.x > W) loseLife();
+    if (frog.x + CELL < 0 || frog.x > W) loseLife("ahogo");
   }
 
   function update(dt: number) {
@@ -345,6 +410,7 @@ export function startRana(
     const now = Date.now();
     if (now - lastMoveAt < MOVE_COOLDOWN_MS) return;
     lastMoveAt = now;
+    beep(600, 60, "square");
 
     const col = Math.max(
       0,
@@ -386,6 +452,8 @@ export function startRana(
     stop() {
       cancelAnimationFrame(rafId);
       window.removeEventListener("keydown", onKeyDown);
+      pendingMelodyTimeouts.forEach(clearTimeout);
+      audioCtx?.close();
     },
     setPaused(p: boolean) {
       paused = p;
@@ -393,6 +461,9 @@ export function startRana(
     },
     endGame() {
       finish();
+    },
+    setMuted(m: boolean) {
+      muted = m;
     },
   };
 }
