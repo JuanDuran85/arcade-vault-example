@@ -40,12 +40,12 @@ Esta feature no introduce estructuras nuevas. Reutiliza `public.profiles` de SPE
 
 ## Acceptance criteria
 
-- [ ] Click en GOOGLE redirige al consentimiento de Google y, al autorizar, vuelve logueado a `/`.
-- [ ] Click en GITHUB redirige al consentimiento de GitHub y, al autorizar, vuelve logueado a `/`.
-- [ ] `components/nav.tsx` muestra el nombre derivado del provider tras loguearse por OAuth.
-- [ ] La fila de `profiles` (SPEC 13) del usuario logueado por OAuth tiene `avatar_url` no nulo.
-- [ ] Iniciar sesión con correo + password (SPEC 04) sigue funcionando sin cambios.
-- [ ] `npm run build` y `npm run lint` terminan sin errores.
+- [X] Click en GOOGLE redirige al consentimiento de Google y, al autorizar, vuelve logueado a `/`.
+- [X] Click en GITHUB redirige al consentimiento de GitHub y, al autorizar, vuelve logueado a `/`.
+- [X] `components/nav.tsx` muestra el nombre derivado del provider tras loguearse por OAuth.
+- [X] La fila de `profiles` (SPEC 13) del usuario logueado por OAuth tiene `avatar_url` no nulo.
+- [X] Iniciar sesión con correo + password (SPEC 04) sigue funcionando sin cambios.
+- [X] `npm run build` y `npm run lint` terminan sin errores.
 
 ## Decisions taken and discarded
 
