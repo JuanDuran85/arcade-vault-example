@@ -2,7 +2,11 @@
 
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
-import { useSession } from "@/lib/session";
+import {
+  useSession,
+  isValidPassword,
+  PASSWORD_REQUIREMENTS_MESSAGE,
+} from "@/lib/session";
 
 export default function ActualizarPasswordPage() {
   const router = useRouter();
@@ -17,6 +21,10 @@ export default function ActualizarPasswordPage() {
     setError(null);
     if (pass !== confirm) {
       setError("Las contraseñas no coinciden.");
+      return;
+    }
+    if (!isValidPassword(pass)) {
+      setError(PASSWORD_REQUIREMENTS_MESSAGE);
       return;
     }
     setSubmitting(true);

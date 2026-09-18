@@ -41,6 +41,16 @@ async function resolveSessionUser(
   return { ...base, avatarUrl: data?.avatar_url ?? null };
 }
 
+const PASSWORD_REGEX =
+  /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}$/;
+
+export const PASSWORD_REQUIREMENTS_MESSAGE =
+  "La contraseña debe tener al menos 8 caracteres, con mayúscula, minúscula, número y símbolo.";
+
+export function isValidPassword(password: string): boolean {
+  return PASSWORD_REGEX.test(password);
+}
+
 // Supabase error messages arrive in English; the login form only shows Spanish.
 function translateAuthError(message: string): string {
   if (message.includes("Invalid login credentials"))
