@@ -65,13 +65,17 @@ The catalog and the leaderboard are real Supabase data (SPEC 06). Types live in 
 
 Spec-driven development using the `/spec` and `/spec-impl` skills from [Klerith/fernando-skills](https://github.com/Klerith/fernando-skills) (`npx skills@latest add Klerith/fernando-skills`). Implemented specs live in `specs/`; check there before assuming a feature is undesigned.
 
-For a new game specifically, use the project skill `/add-game` (`.claude/skills/add-game/`) instead of `/spec` directly — it interviews you (port from `references/started-games/` vs. design from scratch, catalog entry, controls) and writes the resulting `specs/NN-<juego>-game.md`, ready for `/spec-impl`.
+For a new game: `game-planner` suggests one → `/add-game` writes its spec → `/spec-impl-game` implements it, auto-chaining `skin-designer` then `mobile_porter`. For a themed batch of specs instead of a single pick, `game-jam` writes the full spec set to `specs/game-jam/<juego>/`, implemented spec-by-spec with plain `/spec-impl` (skins/táctil still need `skin-designer`/`mobile_porter` invoked separately afterward).
 
-Antes de eso, para decidir **qué** juego agregar, está el agente `game-planner` (`.claude/agents/game-planner.md`): lee `references/implemented-games.md` y `references/started-games/`, recomienda 1 juego + 2 alternativas (diversidad de categoría → factibilidad en canvas 2D → reconocimiento clásico) y mantiene el TODO acumulativo en `references/game-suggestions-todo.md`. No escribe specs ni código; termina apuntando a `/add-game`.
+- **`/add-game`** (`.claude/skills/add-game/`) — interviews you (port from `references/started-games/` vs. design from scratch, catalog entry, controls) and writes `specs/NN-<juego>-game.md`.
+- **`/spec-impl-game`** (`.claude/skills/spec-impl-game/`) — runs `/spec-impl` on a game spec, then triggers `skin-designer` and `mobile_porter` in sequence. Use instead of plain `/spec-impl` for `/add-game`-shaped specs.
 
-Para las **skins** de un juego ya implementado está el agente `skin-designer` (`.claude/agents/skin-designer.md`): da las tres skins (`clasico` por defecto, `neon`, `retro`) a **un solo juego por corrida** — el que se le indique, nunca a los demás — sobre el contrato compartido de seis roles en `lib/games/skins.ts`, y mantiene el registro acumulativo en `references/game-with-themes.md`. Sin juego indicado solo audita y pregunta. El contraste de cada skin sobre el canvas oscuro lo comprueba `node scripts/check-skins.mjs` (la plataforma es dark-only; no hay modo claro).
+Agentes (un trabajo puntual, un juego por corrida — el detalle exacto vive en cada archivo):
 
-Para el **layout responsive/táctil** fuera de la pantalla de juego (esa ya la cubrió SPEC 11) está el agente `mobile_porter` (`.claude/agents/mobile_porter.md`): audita las siete rutas a 390px de ancho, arregla **una ruta por corrida** — la que se le indique — reusando el breakpoint `max-width: 600px` ya establecido en `app/globals.css`, y mantiene el registro en `references/mobile-audit.md`. Sin ruta indicada solo audita y pregunta. No hay app nativa: "móvil" es este mismo sitio en un navegador de teléfono.
+- **`game-planner`** (`.claude/agents/game-planner.md`) — recomienda el próximo juego a agregar; mantiene `references/game-suggestions-todo.md`.
+- **`game-jam`** (`.claude/agents/game-jam.md`) — dado un tema (o un juego ya elegido), escribe su tanda de specs en `specs/game-jam/<juego>/`; nunca código.
+- **`skin-designer`** (`.claude/agents/skin-designer.md`) — da las skins `clasico`/`neon`/`retro` a un juego ya implementado; mantiene `references/game-with-themes.md`.
+- **`mobile_porter`** (`.claude/agents/mobile_porter.md`) — da controles táctiles a un juego pendiente; mantiene `references/mobile-audit.md`.
 
 ## Environment variables
 
