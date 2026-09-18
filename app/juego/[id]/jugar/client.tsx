@@ -47,6 +47,7 @@ function GameCanvas({
     const canvas = canvasRef.current;
     if (!canvas) return;
     const handle = start(canvas, { onState, onGameOver }, skinRef.current);
+    canvas.focus();
     handleRef.current = handle;
     return () => {
       handle.stop();
@@ -69,7 +70,7 @@ function GameCanvas({
     Object.assign(skinRef.current, SKINS[skinId]);
   }, [skinId]);
 
-  return <canvas ref={canvasRef} className="game-canvas" />;
+  return <canvas ref={canvasRef} className="game-canvas" tabIndex={-1} />;
 }
 
 // Space es la única tecla cuyo `key` no coincide con su `code`.
