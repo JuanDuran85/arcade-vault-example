@@ -22,4 +22,5 @@ export interface ScoreRow {
 
 export interface SessionUser {
   name: string;
+  avatarUrl?: string | null;
 }
