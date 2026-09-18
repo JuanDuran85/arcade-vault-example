@@ -2,7 +2,11 @@
 
 import React, { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useSession } from "@/lib/session";
+import {
+  useSession,
+  isValidPassword,
+  PASSWORD_REQUIREMENTS_MESSAGE,
+} from "@/lib/session";
 
 export default function AuthPage() {
   return (
@@ -34,6 +38,10 @@ function AuthForm() {
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+    if (tab === "up" && !isValidPassword(pass)) {
+      setError(PASSWORD_REQUIREMENTS_MESSAGE);
+      return;
+    }
     setSubmitting(true);
     const { error } =
       tab === "in"
