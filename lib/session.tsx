@@ -1,7 +1,7 @@
 "use client";
 
 import React, { createContext, useContext, useState, useEffect } from "react";
-import type { User } from "@supabase/supabase-js";
+import type { SupabaseClient, User } from "@supabase/supabase-js";
 import { SessionUser } from "./types";
 import { createClient } from "./supabase/client";
 
@@ -25,6 +25,19 @@ function toSessionUser(u: User): SessionUser {
   return { name: (u.user_metadata?.name as string) ?? u.email ?? "JUGADOR" };
 }
 
+async function resolveSessionUser(
+  supabase: SupabaseClient,
+  u: User,
+): Promise<SessionUser> {
+  const base = toSessionUser(u);
+  const { data } = await supabase
+    .from("profiles")
+    .select("avatar_url")
+    .eq("id", u.id)
+    .single();
+  return { ...base, avatarUrl: data?.avatar_url ?? null };
+}
+
 // Supabase error messages arrive in English; the login form only shows Spanish.
 function translateAuthError(message: string): string {
   if (message.includes("Invalid login credentials"))
@@ -44,13 +57,15 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {
-      if (data.user) setUser(toSessionUser(data.user));
+      if (data.user) resolveSessionUser(supabase, data.user).then(setUser);
     });
 
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ? toSessionUser(session.user) : null);
+      if (session?.user)
+        resolveSessionUser(supabase, session.user).then(setUser);
+      else setUser(null);
     });
 
     return () => subscription.unsubscribe();
