@@ -18,6 +18,8 @@ interface SessionContextType {
   ) => Promise<{ error: string | null }>;
   logout: () => Promise<void>;
   signInWithOAuth: (provider: "google" | "github") => Promise<void>;
+  resetPasswordForEmail: (email: string) => Promise<{ error: string | null }>;
+  updatePassword: (newPassword: string) => Promise<{ error: string | null }>;
 }
 
 const SessionContext = createContext<SessionContextType | undefined>(undefined);
@@ -102,9 +104,31 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
     });
   };
 
+  const resetPasswordForEmail = async (email: string) => {
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${location.origin}/auth/callback?next=/actualizar-password`,
+    });
+    return { error: error ? translateAuthError(error.message) : null };
+  };
+
+  const updatePassword = async (newPassword: string) => {
+    const { error } = await supabase.auth.updateUser({
+      password: newPassword,
+    });
+    return { error: error ? translateAuthError(error.message) : null };
+  };
+
   return (
     <SessionContext.Provider
-      value={{ user, signIn, signUp, logout, signInWithOAuth }}
+      value={{
+        user,
+        signIn,
+        signUp,
+        logout,
+        signInWithOAuth,
+        resetPasswordForEmail,
+        updatePassword,
+      }}
     >
       {children}
     </SessionContext.Provider>

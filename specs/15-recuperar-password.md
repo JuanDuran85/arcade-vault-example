@@ -38,12 +38,12 @@ Esta feature no introduce estructuras nuevas. Reutiliza `auth.users` (SPEC 04) y
 
 ## Acceptance criteria
 
-- [ ] "¿Olvidaste tu contraseña?" en el tab INICIAR SESIÓN lleva a `/recuperar-password`.
-- [ ] Pedir el reset con un email que existe y con uno que no existe muestra exactamente el mismo mensaje de confirmación.
-- [ ] El link del correo lleva a `/actualizar-password` con una sesión temporal activa.
-- [ ] Definir una contraseña nueva en `/actualizar-password` y luego iniciar sesión con esa contraseña funciona.
-- [ ] El login por Google/GitHub (SPEC 14) sigue redirigiendo a `/` sin regresión tras el cambio en `app/auth/callback/route.ts`.
-- [ ] `npm run build` y `npm run lint` terminan sin errores.
+- [X] "¿Olvidaste tu contraseña?" en el tab INICIAR SESIÓN lleva a `/recuperar-password`.
+- [X] Pedir el reset con un email que existe y con uno que no existe muestra exactamente el mismo mensaje de confirmación.
+- [X] El link del correo lleva a `/actualizar-password` con una sesión temporal activa.
+- [ X] Definir una contraseña nueva en `/actualizar-password` y luego iniciar sesión con esa contraseña funciona.
+- [ X] El login por Google/GitHub (SPEC 14) sigue redirigiendo a `/` sin regresión tras el cambio en `app/auth/callback/route.ts`.
+- [ X] `npm run build` y `npm run lint` terminan sin errores.
 
 ## Decisions taken and discarded
 
