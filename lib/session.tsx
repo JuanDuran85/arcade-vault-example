@@ -17,6 +17,7 @@ interface SessionContextType {
     name: string,
   ) => Promise<{ error: string | null }>;
   logout: () => Promise<void>;
+  signInWithOAuth: (provider: "google" | "github") => Promise<void>;
 }
 
 const SessionContext = createContext<SessionContextType | undefined>(undefined);
@@ -48,6 +49,8 @@ function translateAuthError(message: string): string {
     return "La contraseña debe tener al menos 6 caracteres.";
   if (message.includes("Unable to validate email address"))
     return "El correo ingresado no es válido.";
+  if (message.toLowerCase().includes("rate limit"))
+    return "Demasiados intentos. Esperá unos minutos y volvé a intentar.";
   return "Ocurrió un error. Intentá de nuevo.";
 }
 
@@ -92,8 +95,17 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
     await supabase.auth.signOut();
   };
 
+  const signInWithOAuth = async (provider: "google" | "github") => {
+    await supabase.auth.signInWithOAuth({
+      provider,
+      options: { redirectTo: `${location.origin}/auth/callback` },
+    });
+  };
+
   return (
-    <SessionContext.Provider value={{ user, signIn, signUp, logout }}>
+    <SessionContext.Provider
+      value={{ user, signIn, signUp, logout, signInWithOAuth }}
+    >
       {children}
     </SessionContext.Provider>
   );

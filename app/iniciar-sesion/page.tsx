@@ -1,18 +1,35 @@
 "use client";
 
-import React, { useState } from "react";
-import { useRouter } from "next/navigation";
+import React, { Suspense, useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useSession } from "@/lib/session";
 
 export default function AuthPage() {
+  return (
+    <Suspense>
+      <AuthForm />
+    </Suspense>
+  );
+}
+
+function AuthForm() {
   const router = useRouter();
-  const { signIn, signUp } = useSession();
+  const searchParams = useSearchParams();
+  const { user: sessionUser, signIn, signUp, signInWithOAuth } = useSession();
   const [tab, setTab] = useState("in");
   const [user, setUser] = useState("");
   const [pass, setPass] = useState("");
   const [email, setEmail] = useState("");
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(() =>
+    searchParams.get("error") === "oauth"
+      ? "No se pudo completar el inicio de sesión. Intentá de nuevo."
+      : null,
+  );
   const [submitting, setSubmitting] = useState(false);
+
+  useEffect(() => {
+    if (sessionUser) router.push("/");
+  }, [sessionUser, router]);
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -140,10 +157,18 @@ export default function AuthPage() {
 
         <div className="auth-divider">O CONTINÚA CON</div>
         <div className="social">
-          <button className="btn ghost" type="button">
+          <button
+            className="btn ghost"
+            type="button"
+            onClick={() => signInWithOAuth("google")}
+          >
             ◆ GOOGLE
           </button>
-          <button className="btn ghost" type="button">
+          <button
+            className="btn ghost"
+            type="button"
+            onClick={() => signInWithOAuth("github")}
+          >
             ▣ GITHUB
           </button>
         </div>

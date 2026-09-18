@@ -28,7 +28,12 @@ export async function updateSession(request: NextRequest) {
   // Do not use `getSession()` here: it trusts the cookie without revalidating
   // against the Supabase server. `getUser()` does revalidate, which is what
   // refreshes the token on each request.
-  await supabase.auth.getUser();
+  try {
+    await supabase.auth.getUser();
+  } catch {
+    // ponytail: transient auth-refresh failure — let the request through
+    // with the prior cookie state instead of breaking all navigation.
+  }
 
   return response;
 }

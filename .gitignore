@@ -196,3 +196,6 @@ next-env.d.ts
 .playwright-screenshots/
 .agents
 .claude/skills
+
+# local planning docs
+.plans/

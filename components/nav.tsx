@@ -69,11 +69,28 @@ export default function Nav() {
         </div>
 
         {user ? (
-          <button className="btn ghost auth-btn" onClick={logout}>
-            {user.name} ▾
-          </button>
+          <div
+            className="auth-btn"
+            style={{ display: "flex", alignItems: "center", gap: 8 }}
+          >
+            <span className="btn ghost" style={{ cursor: "default" }}>
+              {user.name}
+            </span>
+            <button
+              className="btn ghost"
+              onClick={logout}
+              title="Cerrar sesión"
+              aria-label="Cerrar sesión"
+            >
+              ⏻
+            </button>
+          </div>
         ) : (
-          <Link href="/iniciar-sesion" className="btn auth-btn" onClick={() => setOpen(false)}>
+          <Link
+            href="/iniciar-sesion"
+            className="btn auth-btn"
+            onClick={() => setOpen(false)}
+          >
             Iniciar Sesión
           </Link>
         )}
@@ -93,7 +110,10 @@ export default function Nav() {
       ></div>
 
       <aside className={`av-mobile-panel ${open ? "open" : ""}`}>
-        <div className="pixel neon-cyan" style={{ fontSize: 11, marginBottom: 16 }}>
+        <div
+          className="pixel neon-cyan"
+          style={{ fontSize: 11, marginBottom: 16 }}
+        >
           MENÚ
         </div>
         <Link
@@ -124,15 +144,34 @@ export default function Nav() {
         >
           Acerca de
         </Link>
-        <Link
-          href="/iniciar-sesion"
-          className={isActive("/iniciar-sesion") ? "active" : ""}
-          onClick={() => setOpen(false)}
-        >
-          {user ? "Cuenta" : "Iniciar Sesión"}
-        </Link>
+        {user ? (
+          <button
+            className="btn ghost"
+            onClick={() => {
+              logout();
+              setOpen(false);
+            }}
+          >
+            Cerrar sesión
+          </button>
+        ) : (
+          <Link
+            href="/iniciar-sesion"
+            className={isActive("/iniciar-sesion") ? "active" : ""}
+            onClick={() => setOpen(false)}
+          >
+            Iniciar Sesión
+          </Link>
+        )}
         <div style={{ flex: 1 }}></div>
-        <div className="pixel" style={{ fontSize: 9, color: "var(--ink-faint)", letterSpacing: "0.16em" }}>
+        <div
+          className="pixel"
+          style={{
+            fontSize: 9,
+            color: "var(--ink-faint)",
+            letterSpacing: "0.16em",
+          }}
+        >
           CRÉDITOS · 03
         </div>
       </aside>
