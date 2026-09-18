@@ -121,6 +121,17 @@ function AuthForm() {
               placeholder="••••••••"
             />
           </div>
+          {tab === "in" && (
+            <div style={{ textAlign: "right", marginTop: -6 }}>
+              <a
+                href="/recuperar-password"
+                className="mono"
+                style={{ fontSize: 11, color: "var(--ink-faint)" }}
+              >
+                ¿Olvidaste tu contraseña?
+              </a>
+            </div>
+          )}
           {error && (
             <div
               className="field"
